@@ -4,7 +4,6 @@ module.exports = {
     'src/**/*.ts',
     '!src/**/__test__/**',
     '!src/**/*.test.ts',
-    '!src/db/migrations/**',
     '!src/index.ts',
   ],
   roots: ['<rootDir>/src'],
