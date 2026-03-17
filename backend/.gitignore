@@ -1,0 +1,11 @@
+node_modules
+tmp
+build
+coverage
+.env
+logs
+.idea/
+.scannerwork/**
+sonarscan.sh
+test-report.xml
+**/.DS_Store

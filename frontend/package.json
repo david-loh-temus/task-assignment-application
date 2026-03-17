@@ -1,0 +1,118 @@
+{
+  "name": "task-assignment-web",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "scripts": {
+    "dev": "vite dev --port 3000",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:ci": "vitest --run",
+    "test:coverage": "vitest --coverage --run",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
+    "lint:fix": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
+    "lint:css": "stylelint \"src/**/*.{css,scss}\"",
+    "lint:css:fix": "stylelint \"src/**/*.{css,scss}\" --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,scss,md,json}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,scss,md,json}\"",
+    "prepare": "husky install",
+    "typecheck": "tsgo -b --pretty  --noEmit "
+  },
+  "dependencies": {
+    "@ant-design/colors": "8.0.1",
+    "@ant-design/icons": "6.1.0",
+    "@fortawesome/fontawesome-svg-core": "7.2.0",
+    "@fortawesome/free-regular-svg-icons": "7.2.0",
+    "@fortawesome/free-solid-svg-icons": "7.2.0",
+    "@fortawesome/react-fontawesome": "3.2.0",
+    "@hookform/resolvers": "5.2.2",
+    "@tanstack/react-devtools": "0.10.0",
+    "@tanstack/react-query": "5.90.21",
+    "@tanstack/react-router": "1.167",
+    "@tanstack/react-router-devtools": "1.166.9",
+    "antd": "6.3.3",
+    "axios": "1.13.6",
+    "date-fns": "4.1.0",
+    "http-status-codes": "2.3.0",
+    "lucide-react": "0.545.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-hook-form": "7.71.2",
+    "vite": "7.3.1",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@tanstack/devtools-vite": "0.6.0",
+    "@tanstack/eslint-config": "0.1.0",
+    "@tanstack/router-plugin": "1.139.13",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
+    "@types/node": "22.12.0",
+    "@types/react": "19.2.0",
+    "@types/react-dom": "19.2.0",
+    "@typescript-eslint/eslint-plugin": "8.56.1",
+    "@typescript-eslint/parser": "8.56.1",
+    "@typescript/native-preview": "7.0.0-dev.20260316.1",
+    "@vitejs/plugin-react": "5.2.0",
+    "@vitest/coverage-istanbul": "4.1.0",
+    "@vitest/ui": "4.1.0",
+    "browserslist": "4.28.1",
+    "eslint": "8.57.1",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-import-resolver-typescript": "4.4.4",
+    "eslint-plugin-prettier": "5.5.5",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.0.1",
+    "eslint-plugin-react-perf": "3.3.3",
+    "eslint-plugin-unused-imports": "4.4.1",
+    "eslint-plugin-vitest": "0.5.4",
+    "globals": "17.4.0",
+    "husky": "9.1.7",
+    "jsdom": "28.1.0",
+    "lint-staged": "16.4.0",
+    "prettier": "3.8.1",
+    "sonar-scanner": "3.1.0",
+    "stylelint": "17.4.0",
+    "stylelint-config-recommended": "18.0.0",
+    "stylelint-config-standard": "40.0.0",
+    "stylelint-csstree-validator": "4.0.0",
+    "stylelint-order": "8.1.1",
+    "tsc-files": "1.1.4",
+    "typescript": "5.7.2",
+    "vite": "7.3.1",
+    "vite-tsconfig-paths": "5.1.4",
+    "vitest": "4.1.0"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "src/**/*.{css,scss}": [
+      "npm run lint:css:fix"
+    ]
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
+  "jest": {
+    "coveragePathIgnorePatterns": [
+      "<rootDir>/src/config/",
+      "<rootDir>/src/__fixtures__/",
+      "<rootDir>/src/testHelpers/",
+      "<rootDir>/src/constants/",
+      "<rootDir>/src/index.tsx",
+      "<rootDir>/src/nonce.ts"
+    ]
+  },
+  "homepage": "/"
+}
