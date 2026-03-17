@@ -9,3 +9,4 @@ logs
 sonarscan.sh
 test-report.xml
 **/.DS_Store
+tsconfig.tsbuildinfo

@@ -1,1 +1,0 @@
-{"version":"7.0.0-dev.20260316.1","root":["./src/index.ts","./src/app/create-app.ts","./src/app/middleware/generic-error-handler.ts","./src/app/middleware/not-found-error-handler.ts","./src/app/routes/health-route.ts","./src/config/config.ts","./src/lib/logger.ts","./src/shared/api-response.ts","./src/shared/http-errors.ts"]}
