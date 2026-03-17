@@ -1,0 +1,31 @@
+set -e
+
+run_backend_checks=false
+run_frontend_checks=false
+
+for file in $(git diff --cached --name-only); do
+  case "$file" in
+    backend/*)
+      run_backend_checks=true
+      ;;
+    frontend/*)
+      run_frontend_checks=true
+      ;;
+  esac
+done
+
+if [ "$run_backend_checks" = true ]; then
+  (
+    cd backend
+    npx --no-install lint-staged
+    npm run typecheck
+  )
+fi
+
+if [ "$run_frontend_checks" = true ]; then
+  (
+    cd frontend
+    npx --no-install lint-staged
+    npm run typecheck
+  )
+fi
