@@ -50,7 +50,57 @@ Frontend:
 npm install
 ```
 
-Installing dependencies runs `husky install` as part of the `prepare` script, so the shared Git hooks are configured automatically.
+## Local Development
+
+1. Start PostgreSQL from the repository root:
+
+```bash
+cd ..
+docker compose -f docker-compose.dev.yml up db
+```
+
+2. Start the backend dev server:
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+3. Start the frontend dev server in this directory:
+
+```bash
+cd ../frontend
+npm install
+npm run dev
+```
+
+Default ports:
+
+- frontend dev server: `127.0.0.1:3000`
+- backend dev server: `127.0.0.1:4000`
+- PostgreSQL: `127.0.0.1:5432`
+
+## Full Containerized Application
+
+Run the complete containerized stack from the repository root:
+
+```bash
+cd ..
+docker compose up --build
+```
+
+The frontend container serves the built application with Nginx.
+
+Default ports:
+
+- frontend: `127.0.0.1:8080`
+- backend: `127.0.0.1:4000`
+- PostgreSQL: `127.0.0.1:5432`
+
+## Container
+
+[`Dockerfile`](Dockerfile) builds the production frontend container.
 
 ## Scripts
 
