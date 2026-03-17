@@ -1,19 +1,31 @@
-import express from 'express';
-import type { Request, Response } from 'express';
-import { StatusCodes } from 'http-status-codes';
+import createApp from './app/create-app';
+import config from './config/config';
+import logger from './lib/logger';
 
-const DEFAULT_PORT = 4000;
-
-const app = express();
-const port = Number(process.env.PORT ?? DEFAULT_PORT);
-
-app.use(express.json());
-
-app.get('/health', (_req: Request, res: Response) => {
-  res.sendStatus(StatusCodes.OK);
+const app = createApp();
+const server = app.listen(config.port, () => {
+  logger.info(
+    {
+      nodeEnv: config.nodeEnv,
+      port: config.port,
+    },
+    'Task Assignment backend listening',
+  );
 });
 
-app.listen(port, () => {
-  /* eslint-disable no-console */
-  console.log(`Task Assignment backend listening on port ${port}`);
+server.on('error', (error: NodeJS.ErrnoException) => {
+  switch (error.code) {
+    case 'EACCES':
+    case 'EADDRINUSE':
+      logger.fatal(
+        {
+          err: error,
+          port: config.port,
+        },
+        'Unable to start server',
+      );
+      process.exit(1);
+    default:
+      throw error;
+  }
 });
