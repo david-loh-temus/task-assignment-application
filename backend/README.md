@@ -53,7 +53,43 @@ Backend:
 npm install
 ```
 
-`npm install` runs the `prepare` script, which executes `husky install` so the repository-level Git hooks are registered automatically.
+## Local Development
+
+1. Start PostgreSQL from the repository root:
+
+```bash
+cd ..
+docker compose -f docker-compose.dev.yml up db
+```
+
+2. Start the backend:
+
+```bash
+npm install
+npm run dev
+```
+
+Endpoint: `http://127.0.0.1:4000/health`
+
+## Backend Container
+
+Start PostgreSQL and the backend container:
+
+```bash
+cd ..
+docker compose -f docker-compose.dev.yml up --build
+```
+
+Default port: `127.0.0.1:4000`
+
+Run the backend container from the full-stack compose file:
+
+```bash
+cd ..
+docker compose up --build backend
+```
+
+[`Dockerfile`](Dockerfile) can be built and deployed independently from the frontend and database.
 
 ## Scripts
 
