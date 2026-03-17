@@ -1,20 +1,10 @@
-import { Kysely, PostgresDialect, sql } from 'kysely';
-import type { PostgresDialectConfig } from 'kysely';
-import { Pool } from 'pg';
+import { PrismaClient } from '@prisma/client';
 
 import config from '../config/config';
 import logger from '../lib/logger';
 
-export interface Database {}
-
-const pool = new Pool({
-  connectionString: config.db.url,
-});
-
-export const db = new Kysely<Database>({
-  dialect: new PostgresDialect({
-    pool: pool as unknown as PostgresDialectConfig['pool'],
-  }),
+export const db = new PrismaClient({
+  log: config.nodeEnv === 'development' ? ['warn', 'error'] : ['error'],
 });
 
 export async function connectToDatabase(): Promise<void> {
@@ -27,7 +17,8 @@ export async function connectToDatabase(): Promise<void> {
   }
 
   try {
-    await sql`select 1`.execute(db);
+    await db.$connect();
+    await db.$queryRaw`SELECT 1`;
     logger.info('Database connection established');
   } catch (error) {
     logger.error({ err: error }, 'Failed to connect to database');
@@ -37,7 +28,7 @@ export async function connectToDatabase(): Promise<void> {
 
 export async function disconnectFromDatabase(): Promise<void> {
   try {
-    await db.destroy();
+    await db.$disconnect();
     logger.info('Database connection closed');
   } catch (error) {
     logger.error({ err: error }, 'Failed to close database connection');
