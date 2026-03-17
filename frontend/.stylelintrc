@@ -1,0 +1,33 @@
+{
+  "extends": ["stylelint-config-recommended"],
+  "plugins": ["stylelint-order", "stylelint-csstree-validator"],
+  "rules": {
+    "value-no-vendor-prefix": null,
+    "max-nesting-depth": 1,
+    "csstree/validator": true,
+    "order/order": ["declarations"],
+    "order/properties-order": [
+      [
+        "display",
+        "position",
+        "margin",
+        "margin-bottom",
+        "margin-left",
+        "margin-right",
+        "margin-top",
+        "padding",
+        "padding-bottom",
+        "padding-left",
+        "padding-right",
+        "padding-top",
+        "height",
+        "width",
+        "max-height",
+        "max-width"
+      ],
+      {
+        "unspecified": "bottom"
+      }
+    ]
+  }
+}
