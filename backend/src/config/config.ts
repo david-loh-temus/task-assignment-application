@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const DEFAULT_PORT = 4000;
 const DEFAULT_LOG_LEVEL = 'info';

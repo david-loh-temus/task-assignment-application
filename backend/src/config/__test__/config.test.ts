@@ -6,6 +6,12 @@ describe('config', () => {
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...originalEnv };
+    jest.doMock('dotenv', () => ({
+      __esModule: true,
+      default: {
+        config: jest.fn(),
+      },
+    }));
   });
 
   afterAll(() => {
