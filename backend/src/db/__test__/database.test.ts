@@ -2,47 +2,48 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 type DatabaseModuleContext = {
   connectToDatabase: () => Promise<void>;
-  db: unknown;
+  db: {
+    $connect: jest.Mock;
+    $disconnect: jest.Mock;
+    $queryRaw: jest.Mock;
+  };
   disconnectFromDatabase: () => Promise<void>;
   mocks: {
-    Kysely: jest.Mock;
-    Pool: jest.Mock;
-    PostgresDialect: jest.Mock;
-    destroy: jest.Mock;
+    PrismaClient: jest.Mock;
+    connect: jest.Mock;
+    disconnect: jest.Mock;
     error: jest.Mock;
-    execute: jest.Mock;
     info: jest.Mock;
-    sql: jest.Mock;
+    queryRaw: jest.Mock;
   };
 };
 
 async function loadDatabaseModule({
-  destroyImplementation,
-  executeImplementation,
+  connectImplementation,
+  disconnectImplementation,
+  queryRawImplementation,
   url = 'postgres://postgres:postgres@localhost:5432/task_assignment',
 }: {
-  destroyImplementation?: () => Promise<void>;
-  executeImplementation?: () => Promise<void>;
+  connectImplementation?: () => Promise<void>;
+  disconnectImplementation?: () => Promise<void>;
+  queryRawImplementation?: () => Promise<void>;
   url?: string;
 } = {}): Promise<DatabaseModuleContext> {
   jest.resetModules();
 
-  const destroy = jest.fn(destroyImplementation ?? (async () => undefined));
-  const execute = jest.fn(executeImplementation ?? (async () => undefined));
+  const connect = jest.fn(connectImplementation ?? (async () => undefined));
+  const disconnect = jest.fn(disconnectImplementation ?? (async () => undefined));
+  const queryRaw = jest.fn(queryRawImplementation ?? (async () => undefined));
   const error = jest.fn();
   const info = jest.fn();
-  const Pool = jest.fn();
-  const PostgresDialect = jest.fn();
-  const Kysely = jest.fn(() => ({ destroy }));
-  const sql = jest.fn(() => ({ execute }));
-
-  jest.doMock('pg', () => ({
-    Pool,
+  const PrismaClient = jest.fn(() => ({
+    $connect: connect,
+    $disconnect: disconnect,
+    $queryRaw: queryRaw,
   }));
-  jest.doMock('kysely', () => ({
-    Kysely,
-    PostgresDialect,
-    sql,
+
+  jest.doMock('@prisma/client', () => ({
+    PrismaClient,
   }));
   jest.doMock('../../config/config', () => ({
     __esModule: true,
@@ -67,14 +68,12 @@ async function loadDatabaseModule({
   return {
     ...databaseModule,
     mocks: {
-      destroy,
+      PrismaClient,
+      connect,
+      disconnect,
       error,
-      execute,
       info,
-      Kysely,
-      Pool,
-      PostgresDialect,
-      sql,
+      queryRaw,
     },
   };
 }
@@ -84,14 +83,12 @@ describe('database', () => {
     jest.clearAllMocks();
   });
 
-  it('builds the database singleton with the configured connection string', async () => {
+  it('builds the database singleton with PrismaClient', async () => {
     const context = await loadDatabaseModule();
 
-    expect(context.mocks.Pool).toHaveBeenCalledWith({
-      connectionString: 'postgres://postgres:postgres@localhost:5432/task_assignment',
+    expect(context.mocks.PrismaClient).toHaveBeenCalledWith({
+      log: ['error'],
     });
-    expect(context.mocks.PostgresDialect).toHaveBeenCalled();
-    expect(context.mocks.Kysely).toHaveBeenCalled();
   });
 
   it('connects to the database with a lightweight probe query', async () => {
@@ -99,8 +96,8 @@ describe('database', () => {
 
     await context.connectToDatabase();
 
-    expect(context.mocks.sql).toHaveBeenCalled();
-    expect(context.mocks.execute).toHaveBeenCalledWith(context.db);
+    expect(context.mocks.connect).toHaveBeenCalledTimes(1);
+    expect(context.mocks.queryRaw).toHaveBeenCalledTimes(1);
     expect(context.mocks.info).toHaveBeenCalledWith('Database connection established');
   });
 
@@ -123,7 +120,7 @@ describe('database', () => {
 
     await context.disconnectFromDatabase();
 
-    expect(context.mocks.destroy).toHaveBeenCalledTimes(1);
+    expect(context.mocks.disconnect).toHaveBeenCalledTimes(1);
     expect(context.mocks.info).toHaveBeenCalledWith('Database connection closed');
   });
 });
