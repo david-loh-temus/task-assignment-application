@@ -1,36 +1,31 @@
-import type { ErrorRequestHandler } from 'express';
+import type { ErrorRequestHandler, NextFunction, Request, Response } from 'express';
 
 import logger from '../../lib/logger';
-import { sendError, sendInternalServerError } from '../../shared/api-response';
-import { INTERNAL_SERVER_ERROR, type HttpError } from '../../shared/http-errors';
+import { sendError } from '../../shared/api-response';
+import { INTERNAL_SERVER_ERROR, isHttpError } from '../../shared/http-errors';
 
-const genericErrorHandler: ErrorRequestHandler = (err: HttpError, _req, res, _next): void => {
-  const status = typeof err.status === 'number' ? err.status : INTERNAL_SERVER_ERROR.status;
-  const code = typeof err.code === 'string' ? err.code : INTERNAL_SERVER_ERROR.code;
-  const message =
-    status >= INTERNAL_SERVER_ERROR.status
-      ? INTERNAL_SERVER_ERROR.message
-      : err.message || INTERNAL_SERVER_ERROR.message;
+/**
+ * A generic error handler middleware for Express applications.
+ * @param err The error object that was thrown during request processing. This can be an instance of HttpError or any other error type.
+ * @param _req The Express request object (not used in this handler).
+ * @param res The Express response object, used to send the error response.
+ * @param _next The next middleware function in the Express stack (not used in this handler).
+ */
+const genericErrorHandler: ErrorRequestHandler = (
+  err: Error,
+  _req: Request,
+  res: Response,
+  _next: NextFunction,
+): void => {
+  const error = isHttpError(err)
+    ? {
+        code: err.code,
+        message: err.message,
+        status: err.status,
+      }
+    : INTERNAL_SERVER_ERROR;
 
-  logger.error(
-    {
-      code,
-      err,
-      status,
-    },
-    'Request failed',
-  );
-
-  const error = {
-    code,
-    message,
-    status,
-  };
-
-  if (status === INTERNAL_SERVER_ERROR.status) {
-    sendInternalServerError(res, error);
-    return;
-  }
+  logger.error({ code: error.code, err, status: error.status }, 'Request failed');
 
   sendError(res, error);
 };
