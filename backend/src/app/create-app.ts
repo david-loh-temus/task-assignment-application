@@ -5,6 +5,7 @@ import helmet from 'helmet';
 
 import developersRouter from '../modules/developers/developers.routes';
 import skillsRouter from '../modules/skills/skills.routes';
+import tasksRouter from '../modules/tasks/tasks.routes';
 
 import genericErrorHandler from './middleware/generic-error-handler';
 import notFoundErrorHandler from './middleware/not-found-error-handler';
@@ -22,6 +23,7 @@ export default function createApp(): Express {
 
   app.use('/developers', developersRouter);
   app.use('/skills', skillsRouter);
+  app.use('/tasks', tasksRouter);
   app.get('/api-docs.json', (_req, res) => {
     res.json(getOpenApiSpec());
   });
