@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { StatusCodes } from 'http-status-codes';
 
 import logger from '../../../lib/logger';
+import { badRequest } from '../../../shared/errors';
 import genericErrorHandler from '../generic-error-handler';
 
 describe('genericErrorHandler', () => {
@@ -35,10 +36,7 @@ describe('genericErrorHandler', () => {
       json: jest.fn(),
       status: jest.fn(),
     };
-    const error = Object.assign(new Error('Bad request'), {
-      code: 'BAD_REQUEST',
-      status: StatusCodes.BAD_REQUEST,
-    });
+    const error = badRequest('Bad request');
 
     response.status.mockReturnValue(response);
     jest.spyOn(logger, 'error').mockImplementation(() => logger);
