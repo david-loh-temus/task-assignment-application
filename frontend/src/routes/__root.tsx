@@ -2,12 +2,14 @@ import { TanStackDevtools } from '@tanstack/react-devtools';
 import { Outlet, createRootRoute } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 
+import { AppShell } from '@app/layout/AppShell';
+
 const RootLayout = () => {
   return (
-    <div className="app-layout">
-      <main className="app-content">
+    <>
+      <AppShell>
         <Outlet />
-      </main>
+      </AppShell>
 
       <TanStackDevtools
         config={{
@@ -20,7 +22,7 @@ const RootLayout = () => {
           },
         ]}
       />
-    </div>
+    </>
   );
 };
 
