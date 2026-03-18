@@ -11,6 +11,11 @@ export const developerReadInclude = {
         },
       },
     },
+    orderBy: {
+      skill: {
+        name: 'asc',
+      },
+    },
   },
   tasks: {
     select: {
@@ -18,6 +23,9 @@ export const developerReadInclude = {
       id: true,
       status: true,
       title: true,
+    },
+    orderBy: {
+      displayId: 'asc',
     },
   },
 } satisfies Prisma.DeveloperInclude;

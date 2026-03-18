@@ -105,8 +105,16 @@ describe('developers.service', () => {
               },
             },
           },
+          orderBy: {
+            skill: {
+              name: 'asc',
+            },
+          },
         },
         tasks: {
+          orderBy: {
+            displayId: 'asc',
+          },
           select: {
             displayId: true,
             id: true,
@@ -152,8 +160,16 @@ describe('developers.service', () => {
               },
             },
           },
+          orderBy: {
+            skill: {
+              name: 'asc',
+            },
+          },
         },
         tasks: {
+          orderBy: {
+            displayId: 'asc',
+          },
           select: {
             displayId: true,
             id: true,

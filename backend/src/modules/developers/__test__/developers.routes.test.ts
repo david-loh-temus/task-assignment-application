@@ -181,54 +181,53 @@ describe('developers.routes', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('passes a not found error to the next middleware when the developer does not exist', async () => {
+  it('throws a not found error when the developer does not exist', async () => {
     const { default: controllerDefault } = await loadDevelopersModule();
     const response = createResponseMock();
     const next = createNextMock() as unknown as NextFunction;
 
-    await controllerDefault.getDeveloper(
-      {
-        params: {
-          id: '0f41b698-2a1d-430f-862e-9566cfcf2896',
-        },
-      } as never,
-      response,
-      next,
-    );
-
+    await expect(
+      controllerDefault.getDeveloper(
+        {
+          params: {
+            id: '0f41b698-2a1d-430f-862e-9566cfcf2896',
+          },
+        } as never,
+        response,
+        next,
+      ),
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      message: 'Developer not found',
+      status: StatusCodes.NOT_FOUND,
+    });
     expect(response.status).not.toHaveBeenCalled();
-    expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({
-        code: 'NOT_FOUND',
-        message: 'Developer not found',
-        status: StatusCodes.NOT_FOUND,
-      }),
-    );
+    expect(next).not.toHaveBeenCalled();
   });
 
-  it('passes a bad request error to the next middleware when the developer id is not a uuid', async () => {
+  it('throws a bad request error when the developer id is not a uuid', async () => {
     const { default: controllerDefault } = await loadDevelopersModule();
     const response = createResponseMock();
     const next = createNextMock() as unknown as NextFunction;
 
-    await controllerDefault.getDeveloper(
-      {
-        params: {
-          id: 'not-a-uuid',
-        },
-      } as never,
-      response,
-      next,
-    );
+    await expect(
+      controllerDefault.getDeveloper(
+        {
+          params: {
+            id: 'not-a-uuid',
+          },
+        } as never,
+        response,
+        next,
+      ),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: 'Developer id must be a valid UUID',
+      status: StatusCodes.BAD_REQUEST,
+    });
 
     expect(response.status).not.toHaveBeenCalled();
-    expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({
-        code: 'BAD_REQUEST',
-        message: 'Developer id must be a valid UUID',
-        status: StatusCodes.BAD_REQUEST,
-      }),
-    );
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('publishes developer docs in the generated OpenAPI spec', async () => {
