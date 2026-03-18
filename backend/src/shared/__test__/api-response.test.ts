@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { StatusCodes } from 'http-status-codes';
 
-import { sendAccepted, sendCreated, sendError, sendInternalServerError, sendNotFound, sendOk } from '../api-response';
+import { sendAccepted, sendCreated, sendError, sendOk } from '../api-response';
 
 function createResponseDouble(): {
   json: ReturnType<typeof jest.fn>;
@@ -53,7 +53,7 @@ describe('api-response', () => {
       status: StatusCodes.NOT_FOUND,
     };
 
-    sendNotFound(response as never, error);
+    sendError(response as never, error);
 
     expect(response.status).toHaveBeenCalledWith(StatusCodes.NOT_FOUND);
     expect(response.json).toHaveBeenCalledWith({ error });
@@ -67,7 +67,7 @@ describe('api-response', () => {
       status: StatusCodes.INTERNAL_SERVER_ERROR,
     };
 
-    sendInternalServerError(response as never, error);
+    sendError(response as never, error);
 
     expect(response.status).toHaveBeenCalledWith(StatusCodes.INTERNAL_SERVER_ERROR);
     expect(response.json).toHaveBeenCalledWith({ error });
