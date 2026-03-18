@@ -1,0 +1,66 @@
+.app-shell {
+  min-height: 100vh;
+  background: #f3f6fb;
+}
+
+.app-shell__sider.ant-layout-sider {
+  border-inline-end: 1px solid #e3e9f4;
+  background: #fff;
+}
+
+.app-shell__brand {
+  padding: 20px 16px 12px;
+}
+
+.app-shell__eyebrow.ant-typography {
+  display: inline-block;
+  margin-bottom: 0;
+  color: #5f6f8f;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.app-shell__brand-title.ant-typography {
+  display: block;
+  margin-top: 4px;
+  color: #172033;
+  font-weight: 600;
+}
+
+.app-shell__menu {
+  padding: 0 8px 16px;
+  border-inline-end: none;
+  background: #fff;
+}
+
+.app-shell__header.ant-layout-header {
+  display: flex;
+  padding: 16px 24px;
+  height: auto;
+  align-items: center;
+  justify-content: flex-start;
+  border-bottom: 1px solid #e3e9f4;
+  background: #fff;
+}
+
+.app-shell__header-title.ant-typography {
+  color: #172033;
+  font-weight: 600;
+}
+
+.app-shell__content.ant-layout-content {
+  padding: 24px;
+  background: transparent;
+}
+
+@media (max-width: 991px) {
+  .app-shell__header.ant-layout-header {
+    padding: 16px 20px;
+  }
+
+  .app-shell__content.ant-layout-content {
+    padding: 20px 16px;
+  }
+}
