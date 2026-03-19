@@ -4,14 +4,16 @@ import { RouterProvider } from '@tanstack/react-router';
 
 import { AppProviders } from './app/providers/AppProviders';
 import { getRouter } from './app/router';
+import { createQueryClient } from './lib/query/query-client';
 
 import './app/styles.css';
 
-const router = getRouter();
+const queryClient = createQueryClient();
+const router = getRouter(queryClient);
 
 ReactDOM.createRoot(document.getElementById('app')!).render(
   <React.StrictMode>
-    <AppProviders>
+    <AppProviders queryClient={queryClient}>
       <RouterProvider router={router} />
     </AppProviders>
   </React.StrictMode>,

@@ -1,13 +1,19 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { isDev } from '@config/config';
 
-import { createQueryClient } from '@lib/query/query-client';
+import type { QueryClient } from '@tanstack/react-query';
 import type { PropsWithChildren } from 'react';
 
-type AppProvidersProps = PropsWithChildren;
+type AppProvidersProps = PropsWithChildren<{
+  queryClient: QueryClient;
+}>;
 
-export const AppProviders = ({ children }: AppProvidersProps) => {
-  const [queryClient] = useState(createQueryClient);
-
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+export const AppProviders = ({ children, queryClient }: AppProvidersProps) => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+      {isDev && <ReactQueryDevtools initialIsOpen={false} />}
+    </QueryClientProvider>
+  );
 };
