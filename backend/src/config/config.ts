@@ -13,6 +13,10 @@ const config = {
   db: {
     url: process.env.DATABASE_URL ?? '',
   },
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY ?? '',
+    model: process.env.GEMINI_MODEL ?? 'gemini-3-pro-preview',
+  },
   logLevel: process.env.LOG_LEVEL ?? (nodeEnv === 'test' ? 'silent' : DEFAULT_LOG_LEVEL),
   nodeEnv,
   port: Number.isNaN(parsedPort) ? DEFAULT_PORT : parsedPort,
