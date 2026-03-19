@@ -186,7 +186,7 @@ describe('startApplication', () => {
     await startApplication({
       connect: jest.fn(async () => undefined),
       disconnect,
-      registerSignalHandler: jest.fn((signal, handler) => {
+      registerSignalHandler: jest.fn((signal: NodeJS.Signals, handler: () => void) => {
         signalHandlers.set(signal, handler);
         return process;
       }),

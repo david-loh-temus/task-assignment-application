@@ -86,4 +86,79 @@ describe('tasks.schemas', () => {
       });
     }).toThrow(ZodError);
   });
+
+  describe('sub-tasks parenting', () => {
+    it('accepts a task create payload with parentTaskId', () => {
+      const result = taskCreateBodySchema.parse({
+        parentTaskId: '0f41b698-2a1d-430f-862e-9566cfcf2896',
+        title: 'Sub Task',
+      });
+
+      expect(result).toEqual({
+        parentTaskId: '0f41b698-2a1d-430f-862e-9566cfcf2896',
+        title: 'Sub Task',
+      });
+    });
+
+    it('accepts a task create payload with null parentTaskId', () => {
+      const result = taskCreateBodySchema.parse({
+        parentTaskId: null,
+        title: 'Top Level Task',
+      });
+
+      expect(result).toEqual({
+        parentTaskId: null,
+        title: 'Top Level Task',
+      });
+    });
+
+    it('rejects a task create payload with invalid parentTaskId', () => {
+      expect(() => {
+        taskCreateBodySchema.parse({
+          parentTaskId: 'not-a-uuid',
+          title: 'Sub Task',
+        });
+      }).toThrow(ZodError);
+    });
+
+    it('accepts a task update payload with parentTaskId', () => {
+      const result = taskUpdateBodySchema.parse({
+        parentTaskId: '0f41b698-2a1d-430f-862e-9566cfcf2896',
+      });
+
+      expect(result).toEqual({
+        parentTaskId: '0f41b698-2a1d-430f-862e-9566cfcf2896',
+      });
+    });
+
+    it('accepts a task update payload to set parentTaskId to null', () => {
+      const result = taskUpdateBodySchema.parse({
+        parentTaskId: null,
+      });
+
+      expect(result).toEqual({
+        parentTaskId: null,
+      });
+    });
+
+    it('accepts a task update payload with status and parentTaskId', () => {
+      const result = taskUpdateBodySchema.parse({
+        parentTaskId: null,
+        status: TaskStatus.DONE,
+      });
+
+      expect(result).toEqual({
+        parentTaskId: null,
+        status: TaskStatus.DONE,
+      });
+    });
+
+    it('rejects a task update payload with invalid parentTaskId', () => {
+      expect(() => {
+        taskUpdateBodySchema.parse({
+          parentTaskId: 'bad-id',
+        });
+      }).toThrow(ZodError);
+    });
+  });
 });

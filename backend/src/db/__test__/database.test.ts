@@ -66,7 +66,9 @@ async function loadDatabaseModule({
   const databaseModule = require('../database') as typeof import('../database');
 
   return {
-    ...databaseModule,
+    connectToDatabase: databaseModule.connectToDatabase,
+    db: databaseModule.db as unknown as DatabaseModuleContext['db'],
+    disconnectFromDatabase: databaseModule.disconnectFromDatabase,
     mocks: {
       PrismaClient,
       connect,

@@ -2,12 +2,14 @@ import { StatusCodes } from 'http-status-codes';
 
 export class HttpError extends Error {
   code: string;
+  message: string;
   status: number;
 
   constructor(error: { code: string; message: string; status: number }) {
     super(error.message);
     this.name = 'HttpError';
     this.code = error.code;
+    this.message = error.message;
     this.status = error.status;
   }
 }
