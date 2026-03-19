@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { TaskStatus } from '@prisma/client';
 import { StatusCodes } from 'http-status-codes';
+
 import { loadTasksService } from '../../../__test__/__helpers__/database-test-helper';
 import { expectedTaskReadInclude } from './__fixtures__/task-fixtures';
 
@@ -10,9 +11,22 @@ describe('tasks.service - Create Operations', () => {
   });
 
   describe('createTask', () => {
-    it('creates a task with no relations', async () => {
+    it('generates required skills with Gemini when skillIds are omitted', async () => {
+      const backendSkillId = '33333333-3333-3333-3333-000000000001';
       const { createTask, databaseDouble } = await loadTasksService({
-        skillFindManyImplementation: async () => [],
+        classifyTaskSkillsImplementation: async () => ['Backend'],
+        getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
+        skillFindManyImplementation: async () => [
+          {
+            id: backendSkillId,
+            name: 'backend',
+          },
+        ],
+        skillUpsertImplementation: async () => ({
+          id: backendSkillId,
+          name: 'backend',
+          source: 'HUMAN',
+        }),
         taskCreateImplementation: async () => ({
           assignedDeveloper: null,
           createdAt: new Date('2026-03-18T00:00:00.000Z'),
@@ -20,7 +34,14 @@ describe('tasks.service - Create Operations', () => {
           displayId: 12,
           id: '11111111-1111-1111-1111-000000000012',
           parentTask: null,
-          skills: [],
+          skills: [
+            {
+              skill: {
+                id: backendSkillId,
+                name: 'Backend',
+              },
+            },
+          ],
           status: TaskStatus.TODO,
           subtasks: [],
           title: 'Build API',
@@ -39,22 +60,46 @@ describe('tasks.service - Create Operations', () => {
         displayId: 12,
         id: '11111111-1111-1111-1111-000000000012',
         parentTask: null,
-        skills: [],
+        skills: [
+          {
+            id: backendSkillId,
+            name: 'Backend',
+          },
+        ],
         status: TaskStatus.TODO,
         subtasks: [],
         title: 'Build API',
         updatedAt: '2026-03-18T01:00:00.000Z',
       });
+      expect(databaseDouble.$transaction).toHaveBeenCalledTimes(1);
+      expect(databaseDouble.skill.findMany).toHaveBeenCalledWith({
+        select: {
+          id: true,
+          name: true,
+        },
+        where: {
+          name: {
+            in: ['backend'],
+          },
+        },
+      });
+      expect(databaseDouble.skill.upsert).not.toHaveBeenCalled();
       expect(databaseDouble.task.create).toHaveBeenCalledWith({
         data: {
+          skills: {
+            create: [
+              {
+                skillId: backendSkillId,
+              },
+            ],
+          },
           title: 'Build API',
         },
         ...expectedTaskReadInclude,
       });
     });
 
-    it('creates a task with skills and an assigned developer when they are compatible', async () => {
-      // displayId: 13, dev-1, skill-1
+    it('creates a task with provided skills and skips Gemini classification', async () => {
       const devUuid = '22222222-2222-2222-2222-000000000001';
       const skillUuid = '33333333-3333-3333-3333-000000000001';
       const { createTask, databaseDouble } = await loadTasksService({
@@ -137,6 +182,7 @@ describe('tasks.service - Create Operations', () => {
           },
         },
       });
+      expect(databaseDouble.$transaction).not.toHaveBeenCalled();
       expect(databaseDouble.task.create).toHaveBeenCalledWith({
         data: {
           assignedDeveloperId: devUuid,
@@ -152,6 +198,104 @@ describe('tasks.service - Create Operations', () => {
         },
         ...expectedTaskReadInclude,
       });
+    });
+
+    it('creates new LLM skills when Gemini returns names that do not exist', async () => {
+      const llmSkillId = '33333333-3333-3333-3333-000000000099';
+      const { createTask, databaseDouble } = await loadTasksService({
+        classifyTaskSkillsImplementation: async () => ['api_design'],
+        getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
+        skillFindManyImplementation: async () => [],
+        skillUpsertImplementation: async () => ({
+          id: llmSkillId,
+          name: 'api_design',
+          source: 'LLM',
+        }),
+        taskCreateImplementation: async () => ({
+          assignedDeveloper: null,
+          createdAt: new Date('2026-03-18T00:00:00.000Z'),
+          description: null,
+          displayId: 14,
+          id: '11111111-1111-1111-1111-000000000014',
+          parentTask: null,
+          skills: [
+            {
+              skill: {
+                id: llmSkillId,
+                name: 'api_design',
+              },
+            },
+          ],
+          status: TaskStatus.TODO,
+          subtasks: [],
+          title: 'Design the API',
+          updatedAt: new Date('2026-03-18T01:00:00.000Z'),
+        }),
+      });
+
+      await expect(
+        createTask({
+          title: 'Design the API',
+        }),
+      ).resolves.toMatchObject({
+        displayId: 14,
+        skills: [
+          {
+            id: llmSkillId,
+            name: 'api_design',
+          },
+        ],
+      });
+      expect(databaseDouble.skill.upsert).toHaveBeenCalledWith({
+        create: {
+          name: 'api_design',
+          source: 'LLM',
+        },
+        update: {},
+        where: {
+          name: 'api_design',
+        },
+      });
+    });
+
+    it('rejects task creation when Gemini-generated skills do not match the assigned developer', async () => {
+      const devUuid = '22222222-2222-2222-2222-000000000001';
+      const backendSkillId = '33333333-3333-3333-3333-000000000001';
+      const { createTask, databaseDouble } = await loadTasksService({
+        classifyTaskSkillsImplementation: async () => ['Backend', 'api_design'],
+        developerFindUniqueImplementation: async () => ({
+          id: devUuid,
+          skills: [
+            {
+              skillId: backendSkillId,
+            },
+          ],
+        }),
+        getSkillNamesForAiImplementation: async () => ['Backend'],
+        skillFindManyImplementation: async () => [
+          {
+            id: backendSkillId,
+            name: 'Backend',
+          },
+        ],
+        skillUpsertImplementation: async () => ({
+          id: '33333333-3333-3333-3333-000000000002',
+          name: 'api_design',
+          source: 'LLM',
+        }),
+      });
+
+      await expect(
+        createTask({
+          assignedDeveloperId: devUuid,
+          title: 'Design the API',
+        }),
+      ).rejects.toMatchObject({
+        code: 'BAD_REQUEST',
+        message: 'Assigned developer does not have all required skills',
+        status: StatusCodes.BAD_REQUEST,
+      });
+      expect(databaseDouble.task.create).not.toHaveBeenCalled();
     });
 
     it('rejects task creation when the assigned developer does not exist', async () => {
@@ -172,7 +316,7 @@ describe('tasks.service - Create Operations', () => {
       });
     });
 
-    it('rejects task creation when a required skill does not exist', async () => {
+    it('rejects task creation when a required provided skill does not exist', async () => {
       const skillUuid1 = '33333333-3333-3333-3333-000000000001';
       const skillUuid2 = '33333333-3333-3333-3333-000000000002';
       const { createTask } = await loadTasksService({
@@ -195,30 +339,19 @@ describe('tasks.service - Create Operations', () => {
       });
     });
 
-    it('rejects task creation when the assigned developer lacks a required skill', async () => {
-      const devUuid = '22222222-2222-2222-2222-000000000001';
-      const skillUuid = '33333333-3333-3333-3333-000000000001';
+    it('rejects task creation when Gemini returns no skills', async () => {
       const { createTask } = await loadTasksService({
-        developerFindUniqueImplementation: async () => ({
-          id: devUuid,
-          skills: [],
-        }),
-        skillFindManyImplementation: async () => [
-          {
-            id: skillUuid,
-          },
-        ],
+        classifyTaskSkillsImplementation: async () => [],
+        getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
       });
 
       await expect(
         createTask({
-          assignedDeveloperId: devUuid,
-          skillIds: [skillUuid],
           title: 'Build API',
         }),
       ).rejects.toMatchObject({
         code: 'BAD_REQUEST',
-        message: 'Assigned developer does not have all required skills',
+        message: 'Gemini did not return any required skills',
         status: StatusCodes.BAD_REQUEST,
       });
     });

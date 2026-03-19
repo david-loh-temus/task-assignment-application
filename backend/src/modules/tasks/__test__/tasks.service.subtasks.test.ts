@@ -14,6 +14,14 @@ describe('tasks.service - Subtasks Hierarchy', () => {
       const parentUuid = '11111111-1111-1111-1111-000000000010';
       const subtaskUuid = '11111111-1111-1111-1111-000000000020';
       const { createTask, databaseDouble } = await loadTasksService({
+        classifyTaskSkillsImplementation: async () => ['backend'],
+        getSkillNamesForAiImplementation: async () => ['backend', 'frontend'],
+        skillFindManyImplementation: async () => [
+          {
+            id: 'skill-backend',
+            name: 'backend',
+          },
+        ],
         taskFindUniqueImplementation: async () => ({
           id: parentUuid,
           parentTaskId: null,
@@ -53,10 +61,10 @@ describe('tasks.service - Subtasks Hierarchy', () => {
       });
       expect(databaseDouble.task.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: {
+          data: expect.objectContaining({
             parentTaskId: parentUuid,
             title: 'Sub Task',
-          },
+          }),
         }),
       );
     });
@@ -122,6 +130,14 @@ describe('tasks.service - Subtasks Hierarchy', () => {
 
       let callCount = 0;
       const { createTask, databaseDouble } = await loadTasksService({
+        classifyTaskSkillsImplementation: async () => ['backend'],
+        getSkillNamesForAiImplementation: async () => ['backend', 'frontend'],
+        skillFindManyImplementation: async () => [
+          {
+            id: 'skill-backend',
+            name: 'backend',
+          },
+        ],
         taskFindUniqueImplementation: async () => {
           callCount += 1;
           if (callCount === 1) return currentTask;

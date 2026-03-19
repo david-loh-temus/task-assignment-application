@@ -1,5 +1,9 @@
+import { type Prisma, SkillSource } from '@prisma/client';
+
 import { db } from '../../db/database';
 import { badRequest, notFound } from '../../shared/errors';
+import { classifyTaskSkills } from '../ai/ai.service';
+import { getSkillNamesForAi } from '../skills/skills.service';
 
 import type { TaskCreateBody, TaskStatusValue, TaskUpdateBody } from './tasks.schemas';
 import {
@@ -99,6 +103,10 @@ function dedupeIds(ids: string[] | undefined): string[] {
   return [];
 }
 
+function dedupeSkillNames(names: string[]): string[] {
+  return [...new Set(names.map((name) => name.trim().toLowerCase()).filter((name) => name.length > 0))];
+}
+
 /**
  * Fetches a developer by ID with their skills.
  * @param assignedDeveloperId Developer ID
@@ -149,6 +157,75 @@ async function assertSkillsExist(skillIds: string[]): Promise<void> {
   if (skills.length !== skillIds.length) {
     throw notFound('One or more skills were not found');
   }
+}
+
+async function getGeneratedSkillNames(taskTitle: string): Promise<string[]> {
+  const existingSkillNames = await getSkillNamesForAi();
+  const generatedSkillNames = await classifyTaskSkills(taskTitle, JSON.stringify(existingSkillNames));
+
+  if (generatedSkillNames.length === 0) {
+    throw badRequest('Gemini did not return any required skills');
+  }
+
+  return dedupeSkillNames(generatedSkillNames);
+}
+
+/**
+ * Resolves skill IDs by name, creating new skills with LLM source if needed.
+ *
+ * First queries existing skills for efficiency, then uses upsert with Promise.all
+ * for missing skills to handle race conditions where multiple concurrent requests
+ * try to create the same skill. The unique constraint on skill.name ensures data integrity.
+ *
+ * NOTE: If a skill already exists (created by human or previous LLM run),
+ * its original source is preserved via empty update clause.
+ */
+async function resolveSkillIdsByName(
+  transaction: Pick<Prisma.TransactionClient, 'skill'>,
+  skillNames: string[],
+): Promise<string[]> {
+  const normalizedSkillNames = dedupeSkillNames(skillNames);
+  const existingSkills = await transaction.skill.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+    where: {
+      name: {
+        in: normalizedSkillNames,
+      },
+    },
+  });
+
+  const existingSkillIdsByName = new Map(existingSkills.map((skill) => [skill.name, skill.id]));
+  const missingSkillNames = normalizedSkillNames.filter((name) => !existingSkillIdsByName.has(name));
+
+  // Use Promise.all with upsert for missing skills to handle race conditions
+  // The unique constraint on name prevents duplicates across concurrent requests
+  if (missingSkillNames.length > 0) {
+    const createdSkills = await Promise.all(
+      missingSkillNames.map((skillName) =>
+        transaction.skill.upsert({
+          create: {
+            name: skillName,
+            source: SkillSource.LLM,
+          },
+          update: {}, // No-op if exists - preserves original source
+          where: {
+            name: skillName,
+          },
+        }),
+      ),
+    );
+
+    // Add newly created skills to the map
+    createdSkills.forEach((skill) => {
+      existingSkillIdsByName.set(skill.name, skill.id);
+    });
+  }
+
+  // Return IDs in the same order as input skill names
+  return normalizedSkillNames.map((name) => existingSkillIdsByName.get(name)!);
 }
 
 /**
@@ -505,17 +582,33 @@ export async function createTask(input: TaskCreateBody): Promise<TaskReadDto> {
   const developer = await getDeveloperForAssignment(input.assignedDeveloperId);
   const parentTask = await getParentTaskForValidation(input.parentTaskId);
 
-  await assertSkillsExist(skillIds);
-  assertDeveloperHasSkills(developer, skillIds);
-
   if (parentTask) {
     // During creation, task ID doesn't exist yet, so only nesting depth is validated
     await assertValidParentTask(null, parentTask);
   }
 
-  const task = await db.task.create({
-    data: buildTaskCreateData(input, skillIds),
-    include: taskReadInclude,
+  if (skillIds.length > 0) {
+    await assertSkillsExist(skillIds);
+    assertDeveloperHasSkills(developer, skillIds);
+
+    const task = await db.task.create({
+      data: buildTaskCreateData(input, skillIds),
+      include: taskReadInclude,
+    });
+
+    return mapTask(task);
+  }
+
+  const generatedSkillNames = await getGeneratedSkillNames(input.title);
+  const task = await db.$transaction(async (transaction) => {
+    const generatedSkillIds = await resolveSkillIdsByName(transaction, generatedSkillNames);
+
+    assertDeveloperHasSkills(developer, generatedSkillIds);
+
+    return transaction.task.create({
+      data: buildTaskCreateData(input, generatedSkillIds),
+      include: taskReadInclude,
+    });
   });
 
   return mapTask(task);
