@@ -3,7 +3,8 @@
 import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { AppShell } from './AppShell';
+
+import { AppShell } from '../AppShell';
 import type { ReactNode } from 'react';
 
 type LinkProps = {

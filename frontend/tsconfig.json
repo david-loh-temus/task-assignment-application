@@ -17,6 +17,7 @@
       "@lib/*": ["./src/lib/*"],
       "@routes/*": ["./src/routes/*"],
       "@assets/*": ["./src/assets/*"],
+      "@config/*": ["./src/config/*"],
       "@test/*": ["./src/test/*"]
     },
 
