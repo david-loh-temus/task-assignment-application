@@ -56,9 +56,14 @@ async function loadTasksModule({
             findUnique: jest.fn(),
           },
           skill: {
-            findMany: jest.fn(),
+            findMany: jest.fn(async () => []),
+            upsert: jest.fn(async (args: { where: { name: string } }) => ({
+              id: `skill-${args.where.name}`,
+              name: args.where.name,
+            })),
           },
           task: {
+            create,
             update,
           },
         }),
@@ -77,6 +82,23 @@ async function loadTasksModule({
       },
     },
   }));
+
+  jest.doMock('../../ai/ai.service', () => ({
+    __esModule: true,
+    classifyTaskSkills: jest.fn(async () => ['backend']),
+  }));
+
+  jest.doMock('../../skills/skills.service', () => {
+    const actualModule = jest.requireActual(
+      '../../skills/skills.service',
+    ) as typeof import('../../skills/skills.service');
+
+    return {
+      __esModule: true,
+      ...actualModule,
+      getSkillNamesForAi: jest.fn(async () => ['backend', 'frontend']),
+    };
+  });
 
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const controllerModule = require('../tasks.controller') as typeof import('../tasks.controller');

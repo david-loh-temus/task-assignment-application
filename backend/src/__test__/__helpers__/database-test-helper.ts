@@ -12,6 +12,7 @@ export type DatabaseDouble = {
   };
   skill: {
     findMany: jest.Mock;
+    upsert: jest.Mock;
   };
   task: {
     create: jest.Mock;
@@ -28,16 +29,22 @@ export type DatabaseDouble = {
  * This helper creates a fresh instance of the tasks service with customizable mock implementations
  */
 export async function loadTasksService({
+  classifyTaskSkillsImplementation,
   developerFindUniqueImplementation,
+  getSkillNamesForAiImplementation,
   skillFindManyImplementation,
+  skillUpsertImplementation,
   taskCreateImplementation,
   taskFindManyImplementation,
   taskFindUniqueImplementation,
   taskUpdateImplementation,
   transactionImplementation,
 }: {
+  classifyTaskSkillsImplementation?: () => Promise<unknown>;
   developerFindUniqueImplementation?: () => Promise<unknown>;
+  getSkillNamesForAiImplementation?: () => Promise<unknown>;
   skillFindManyImplementation?: () => Promise<unknown>;
+  skillUpsertImplementation?: (args: unknown) => Promise<unknown>;
   taskCreateImplementation?: () => Promise<unknown>;
   taskFindManyImplementation?: () => Promise<unknown>;
   taskFindUniqueImplementation?: (args: unknown) => Promise<unknown>;
@@ -57,6 +64,7 @@ export async function loadTasksService({
     },
     skill: {
       findMany: jest.fn(skillFindManyImplementation ?? (async () => [])),
+      upsert: jest.fn(skillUpsertImplementation ?? (async () => null)),
     },
     task: {
       create: jest.fn(taskCreateImplementation ?? (async () => null)),
@@ -70,6 +78,23 @@ export async function loadTasksService({
     __esModule: true,
     db: databaseDouble,
   }));
+
+  jest.doMock('../../modules/ai/ai.service', () => ({
+    __esModule: true,
+    classifyTaskSkills: jest.fn(classifyTaskSkillsImplementation ?? (async () => [])),
+  }));
+
+  jest.doMock('../../modules/skills/skills.service', () => {
+    const actualModule = jest.requireActual(
+      '../../modules/skills/skills.service',
+    ) as typeof import('../../modules/skills/skills.service');
+
+    return {
+      __esModule: true,
+      ...actualModule,
+      getSkillNamesForAi: jest.fn(getSkillNamesForAiImplementation ?? (async () => [])),
+    };
+  });
 
   const serviceModule =
     require('../../modules/tasks/tasks.service') as typeof import('../../modules/tasks/tasks.service');

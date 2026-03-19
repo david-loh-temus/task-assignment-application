@@ -112,6 +112,32 @@ describe('skills.service', () => {
     });
   });
 
+  it('returns skill names for Gemini classification in name order', async () => {
+    const { databaseDouble, getSkillNamesForAi } = await loadSkillsService({
+      findManyImplementation: async () => [
+        {
+          id: 'skill-2',
+          name: 'Backend',
+        },
+        {
+          id: 'skill-1',
+          name: 'Frontend',
+        },
+      ],
+    });
+
+    await expect(getSkillNamesForAi()).resolves.toEqual(['Backend', 'Frontend']);
+    expect(databaseDouble.skill.findMany).toHaveBeenCalledWith({
+      orderBy: {
+        name: 'asc',
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+  });
+
   it('throws a not found error when the skill does not exist', async () => {
     const { getSkillById } = await loadSkillsService({
       findUniqueImplementation: async () => null,

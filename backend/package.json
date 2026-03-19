@@ -15,7 +15,7 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --check '**/*.{ts,json}' --ignore-path .gitignore",
     "format:fix": "prettier --write '**/*.{ts,json}' --ignore-path .gitignore",
-    "test": "TZ=utc NODE_ENV=test jest --passWithNoTests --runInBand --detectOpenHandles --forceExit --no-cache --coverage --coveragePathIgnorePatterns='prisma/migrations'",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' TZ=utc NODE_ENV=test jest --passWithNoTests --runInBand --detectOpenHandles --forceExit --no-cache --coverage --coveragePathIgnorePatterns='prisma/migrations'",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "typecheck": "tsgo --noEmit --pretty",
@@ -32,6 +32,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "@google/genai": "1.46.0",
     "@prisma/client": "6.19.2",
     "axios": "1.13.6",
     "cors": "2.8.6",

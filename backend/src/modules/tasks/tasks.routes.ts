@@ -11,7 +11,7 @@ const tasksRouter = Router();
  *     tags:
  *       - Tasks
  *     summary: Create task
- *     description: Creates a new task with optional required skills, optional developer assignment, and optional parent task for creating sub-tasks. Maximum nesting depth is 3 levels (task → sub-task → sub-sub-task).
+ *     description: Creates a new task with optional required skills, optional developer assignment, and optional parent task for creating sub-tasks. When skillIds are omitted or empty, required skills are generated automatically on the backend. Maximum nesting depth is 3 levels (task → sub-task → sub-sub-task).
  *     requestBody:
  *       required: true
  *       content:
@@ -40,6 +40,7 @@ const tasksRouter = Router();
  *                 items:
  *                   type: string
  *                   format: uuid
+ *                 description: Optional existing skill IDs. If omitted or empty, required skills are generated automatically.
  *     responses:
  *       201:
  *         description: Task created successfully.
