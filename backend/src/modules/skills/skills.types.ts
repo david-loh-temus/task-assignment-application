@@ -8,8 +8,17 @@ export const skillReadSelect = {
   updatedAt: true,
 } satisfies Prisma.SkillSelect;
 
+export const skillClassificationSelect = {
+  id: true,
+  name: true,
+} satisfies Prisma.SkillSelect;
+
 export type SkillRecord = Prisma.SkillGetPayload<{
   select: typeof skillReadSelect;
+}>;
+
+export type SkillClassificationRecord = Prisma.SkillGetPayload<{
+  select: typeof skillClassificationSelect;
 }>;
 
 export type SkillReadDto = {

@@ -1,7 +1,13 @@
 import { db } from '../../db/database';
 import { notFound } from '../../shared/errors';
 
-import { type SkillReadDto, skillReadSelect, type SkillRecord } from './skills.types';
+import {
+  skillClassificationSelect,
+  type SkillClassificationRecord,
+  type SkillReadDto,
+  skillReadSelect,
+  type SkillRecord,
+} from './skills.types';
 
 export type { SkillReadDto } from './skills.types';
 
@@ -12,6 +18,13 @@ function mapSkill(record: SkillRecord): SkillReadDto {
     source: record.source,
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function mapSkillClassification(record: SkillClassificationRecord): { id: string; name: string } {
+  return {
+    id: record.id,
+    name: record.name,
   };
 }
 
@@ -39,4 +52,21 @@ export async function getSkillById(id: string): Promise<SkillReadDto> {
   }
 
   return mapSkill(skill);
+}
+
+export async function getSkillsForClassification(): Promise<Array<{ id: string; name: string }>> {
+  const skills = await db.skill.findMany({
+    orderBy: {
+      name: 'asc',
+    },
+    select: skillClassificationSelect,
+  });
+
+  return skills.map(mapSkillClassification);
+}
+
+export async function getSkillNamesForAi(): Promise<string[]> {
+  const skills = await getSkillsForClassification();
+
+  return skills.map(({ name }) => name);
 }
