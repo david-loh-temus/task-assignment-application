@@ -3,7 +3,7 @@
   "plugins": ["stylelint-order", "stylelint-csstree-validator"],
   "rules": {
     "value-no-vendor-prefix": null,
-    "max-nesting-depth": 1,
+    "max-nesting-depth": [2, { "ignoreAtRules": ["tailwind"] }],
     "csstree/validator": true,
     "order/order": ["declarations"],
     "order/properties-order": [
