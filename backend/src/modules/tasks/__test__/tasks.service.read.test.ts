@@ -40,6 +40,9 @@ describe('tasks.service - Read Operations', () => {
         orderBy: {
           displayId: 'asc',
         },
+        where: {
+          parentTaskId: null,
+        },
       });
     });
   });

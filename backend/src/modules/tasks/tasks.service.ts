@@ -544,6 +544,9 @@ export async function getTasks(): Promise<TaskReadDto[]> {
     orderBy: {
       displayId: 'asc',
     },
+    where: {
+      parentTaskId: null,
+    },
   });
 
   return tasks.map(mapTask);
