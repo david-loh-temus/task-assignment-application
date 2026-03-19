@@ -21,3 +21,8 @@ export type Task = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type UpdateTaskInput = {
+  assignedDeveloperId?: string | null;
+  status?: TaskStatus;
+};
