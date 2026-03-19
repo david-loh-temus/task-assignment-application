@@ -22,6 +22,24 @@ export const taskReadInclude = {
       },
     },
   },
+  parentTask: {
+    select: {
+      id: true,
+      displayId: true,
+      title: true,
+    },
+  },
+  subtasks: {
+    select: {
+      id: true,
+      displayId: true,
+      title: true,
+      description: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  },
 } satisfies Prisma.TaskInclude;
 
 export const taskValidationDeveloperSelect = {
@@ -40,11 +58,24 @@ export const taskValidationSkillSelect = {
 export const taskValidationSelect = {
   assignedDeveloperId: true,
   id: true,
+  parentTaskId: true,
   skills: {
     select: {
       skillId: true,
     },
   },
+  status: true,
+  subtasks: {
+    select: {
+      id: true,
+      status: true,
+    },
+  },
+} satisfies Prisma.TaskSelect;
+
+export const taskValidationParentSelect = {
+  id: true,
+  parentTaskId: true,
 } satisfies Prisma.TaskSelect;
 
 export type TaskRecord = Prisma.TaskGetPayload<{
@@ -55,7 +86,7 @@ export type TaskValidationRecord = Prisma.TaskGetPayload<{
   select: typeof taskValidationSelect;
 }>;
 
-export type TaskReadDto = {
+export interface TaskReadDto {
   id: string;
   displayId: number;
   title: string;
@@ -65,10 +96,16 @@ export type TaskReadDto = {
     id: string;
     name: string;
   } | null;
+  parentTask: {
+    id: string;
+    displayId: number;
+    title: string;
+  } | null;
+  subtasks: TaskReadDto[];
   skills: Array<{
     id: string;
     name: string;
   }>;
   createdAt: string;
   updatedAt: string;
-};
+}

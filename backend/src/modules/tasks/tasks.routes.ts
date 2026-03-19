@@ -11,7 +11,7 @@ const tasksRouter = Router();
  *     tags:
  *       - Tasks
  *     summary: Create task
- *     description: Creates a new task with optional required skills and optional developer assignment.
+ *     description: Creates a new task with optional required skills, optional developer assignment, and optional parent task for creating sub-tasks. Maximum nesting depth is 3 levels (task → sub-task → sub-sub-task).
  *     requestBody:
  *       required: true
  *       content:
@@ -30,6 +30,11 @@ const tasksRouter = Router();
  *                 type: string
  *                 format: uuid
  *                 nullable: true
+ *               parentTaskId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *                 description: ID of the parent task to create a sub-task. Cannot exceed 3 levels of nesting.
  *               skillIds:
  *                 type: array
  *                 items:
@@ -39,9 +44,9 @@ const tasksRouter = Router();
  *       201:
  *         description: Task created successfully.
  *       400:
- *         description: Task payload is invalid.
+ *         description: Task payload is invalid or nesting depth exceeded.
  *       404:
- *         description: Related developer or skill was not found.
+ *         description: Related developer, skill, or parent task was not found.
  */
 tasksRouter.post('/', tasksController.createTask);
 
@@ -91,7 +96,7 @@ tasksRouter.get('/:id', tasksController.getTask);
  *     tags:
  *       - Tasks
  *     summary: Update task
- *     description: Updates a task assignment, required skills, or status.
+ *     description: Updates a task assignment, required skills, status, or parent task (for moving sub-tasks). Cannot mark parent task as DONE if any subtasks are incomplete. Maximum nesting depth is 3 levels.
  *     requestBody:
  *       required: true
  *       content:
@@ -109,6 +114,11 @@ tasksRouter.get('/:id', tasksController.getTask);
  *                 type: string
  *                 format: uuid
  *                 nullable: true
+ *               parentTaskId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *                 description: ID of the parent task to change hierarchy. Set to null to make top-level. Cannot create circular references or exceed nesting depth.
  *               skillIds:
  *                 type: array
  *                 items:
@@ -125,7 +135,7 @@ tasksRouter.get('/:id', tasksController.getTask);
  *       200:
  *         description: Task updated successfully.
  *       400:
- *         description: Task payload is invalid.
+ *         description: Task payload is invalid, nesting depth exceeded, circular reference detected, or cannot mark parent as DONE with incomplete subtasks.
  *       404:
  *         description: Task or related records were not found.
  */
