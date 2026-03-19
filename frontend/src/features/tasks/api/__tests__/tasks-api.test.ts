@@ -1,0 +1,29 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import { taskCollectionFixture, taskFixture } from '@features/tasks/__fixtures__/task-fixtures';
+import { getTaskById, getTasks } from '../tasks-api';
+import type { AxiosResponse } from 'axios';
+
+describe('tasks-api', () => {
+  it('fetches and unwraps the task list', async () => {
+    const get = vi.fn().mockResolvedValue({
+      data: {
+        data: taskCollectionFixture,
+      },
+    } satisfies Pick<AxiosResponse, 'data'>);
+
+    await expect(getTasks({ get } as never)).resolves.toEqual(taskCollectionFixture);
+    expect(get).toHaveBeenCalledWith('/tasks');
+  });
+
+  it('fetches and unwraps a task by id', async () => {
+    const get = vi.fn().mockResolvedValue({
+      data: {
+        data: taskFixture,
+      },
+    } satisfies Pick<AxiosResponse, 'data'>);
+
+    await expect(getTaskById(taskFixture.id, { get } as never)).resolves.toEqual(taskFixture);
+    expect(get).toHaveBeenCalledWith(`/tasks/${taskFixture.id}`);
+  });
+});
