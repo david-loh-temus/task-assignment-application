@@ -33,6 +33,7 @@
     "@tailwindcss/vite": "4.2.2",
     "@tanstack/react-devtools": "0.10.0",
     "@tanstack/react-query": "5.90.21",
+    "@tanstack/react-query-devtools": "5.91.3",
     "@tanstack/react-router": "1.167",
     "@tanstack/react-router-devtools": "1.166.9",
     "antd": "6.3.3",

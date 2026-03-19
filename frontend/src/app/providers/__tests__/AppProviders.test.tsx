@@ -5,6 +5,7 @@ import { render, screen } from '@testing-library/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { describe, expect, it } from 'vitest';
 
+import { createQueryClient } from '@lib/query/query-client';
 import { AppProviders } from '../AppProviders';
 
 const QueryClientProbe = () => {
@@ -18,7 +19,7 @@ const QueryClientProbe = () => {
 describe('AppProviders', () => {
   it('renders children inside the QueryClientProvider context', () => {
     render(
-      <AppProviders>
+      <AppProviders queryClient={createQueryClient()}>
         <QueryClientProbe />
       </AppProviders>,
     );

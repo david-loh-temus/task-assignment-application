@@ -6,6 +6,8 @@ export type AppConfig = {
   readonly apiBaseUrl: string;
 };
 
+export const isDev = import.meta.env.DEV;
+
 export const config: AppConfig = {
   apiBaseUrl: parseApiBaseUrl(import.meta.env.VITE_API_BASE_URL),
 };

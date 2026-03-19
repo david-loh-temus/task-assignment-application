@@ -1,8 +1,10 @@
 import { TanStackDevtools } from '@tanstack/react-devtools';
-import { Outlet, createRootRoute } from '@tanstack/react-router';
+import { Outlet, createRootRouteWithContext } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 
 import { AppShell } from '@app/layout/AppShell';
+
+import type { QueryClient } from '@tanstack/react-query';
 
 const RootLayout = () => {
   return (
@@ -26,6 +28,6 @@ const RootLayout = () => {
   );
 };
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: RootLayout,
 });
