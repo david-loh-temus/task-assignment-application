@@ -20,6 +20,8 @@ export type Task = {
   skills: TaskSkill[];
   createdAt: string;
   updatedAt: string;
+  subtasks?: Task[];
+  parentTask?: Task | null;
 };
 
 export type CreateTaskInput = {
