@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { Typography } from 'antd';
 import { useNavigate } from '@tanstack/react-router';
 
 import { useCreateTaskMutation } from '@features/tasks/mutations/use-create-task-mutation';
@@ -39,14 +40,10 @@ export const CreateTaskPage = ({ developers, skills }: CreateTaskPageProps) => {
   }, [navigate]);
 
   return (
-    <main className="mx-auto flex h-full w-full max-w-[1120px] flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-[32px] font-semibold leading-tight text-slate-900">Create Task</h1>
-          <p className="max-w-3xl text-sm leading-6 text-slate-500 md:text-[15px]">
-            Add a new task and specify the skills required to complete it.
-          </p>
-        </div>
+    <div className="mx-auto flex h-full w-full max-w-[1120px] flex-col gap-6">
+      <header className="flex flex-col">
+        <Typography.Title level={1}>Create Task</Typography.Title>
+        <Typography.Text>Add a new task and specify the skills required to complete it.</Typography.Text>
       </header>
 
       <section className="flex flex-1 flex-col border border-slate-200 bg-white p-6 shadow-sm md:p-8">
@@ -58,6 +55,6 @@ export const CreateTaskPage = ({ developers, skills }: CreateTaskPageProps) => {
           skills={skills}
         />
       </section>
-    </main>
+    </div>
   );
 };
