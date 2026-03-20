@@ -43,6 +43,6 @@ describe('config', () => {
 
     expect(config.db.url).toBe('');
     expect(config.gemini.apiKey).toBe('');
-    expect(config.gemini.model).toBe('gemini-3-pro-preview');
+    expect(config.gemini.model).toBe('gemini-2.5-flash');
   });
 });
