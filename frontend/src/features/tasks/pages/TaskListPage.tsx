@@ -1,18 +1,23 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Typography } from 'antd';
 
 import { TasksTable } from '@features/tasks/components/TasksTable';
+import { SubtaskCreateModal } from '@features/tasks/components/SubtaskCreateModal';
 import { useUpdateTaskMutation } from '@features/tasks/mutations/use-update-task-mutation';
 import type { Developer } from '@features/developers/types/developer';
+import type { Skill } from '@features/skills/types/skill';
 import type { Task, TaskAssignedDeveloper, TaskStatus } from '@features/tasks/types/task';
 
 type TaskListPageProps = {
   developers: Developer[];
+  skills: Skill[];
   tasks: Task[];
 };
 
-export const TaskListPage = ({ developers, tasks }: TaskListPageProps) => {
+export const TaskListPage = ({ developers, skills, tasks }: TaskListPageProps) => {
   const updateTaskMutation = useUpdateTaskMutation();
+  const [isSubtaskModalOpen, setIsSubtaskModalOpen] = useState(false);
+  const [parentTask, setParentTask] = useState<Task | null>(null);
 
   const handleStatusChange = useCallback(
     (task: Task, status: TaskStatus) => {
@@ -36,6 +41,16 @@ export const TaskListPage = ({ developers, tasks }: TaskListPageProps) => {
     [updateTaskMutation],
   );
 
+  const handleAddSubtask = useCallback((task: Task) => {
+    setParentTask(task);
+    setIsSubtaskModalOpen(true);
+  }, []);
+
+  const handleSubtaskCancel = useCallback(() => {
+    setIsSubtaskModalOpen(false);
+    setParentTask(null);
+  }, []);
+
   return (
     <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-6 h-full">
       <header className="flex flex-col flex-none">
@@ -47,12 +62,21 @@ export const TaskListPage = ({ developers, tasks }: TaskListPageProps) => {
         <TasksTable
           developers={developers}
           isUpdatingTask={updateTaskMutation.isPending}
+          onAddSubtask={handleAddSubtask}
           onAssigneeChange={handleAssigneeChange}
           onStatusChange={handleStatusChange}
           pendingTaskId={updateTaskMutation.variables?.id}
           tasks={tasks}
         />
       </section>
+
+      <SubtaskCreateModal
+        developers={developers}
+        isOpen={isSubtaskModalOpen}
+        onClose={handleSubtaskCancel}
+        parentTask={parentTask}
+        skills={skills}
+      />
     </div>
   );
 };

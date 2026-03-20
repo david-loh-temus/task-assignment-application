@@ -30,6 +30,7 @@ export type CreateTaskInput = {
   assignedDeveloperId?: string | null;
   skillIds?: string[];
   status?: TaskStatus;
+  parentTaskId?: string | null;
 };
 
 export type UpdateTaskInput = {
