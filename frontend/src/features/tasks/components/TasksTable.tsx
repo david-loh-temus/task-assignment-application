@@ -130,9 +130,7 @@ export const TasksTable = ({
       {
         dataIndex: 'displayId',
         key: 'displayId',
-        render: (displayId: Task['displayId']) => (
-          <Typography.Text className="text-sm font-semibold text-slate-900">{displayId}</Typography.Text>
-        ),
+        render: (displayId: Task['displayId']) => <Typography.Text strong>{displayId}</Typography.Text>,
         title: 'ID',
         width: 88,
       },
@@ -140,14 +138,12 @@ export const TasksTable = ({
         dataIndex: 'title',
         key: 'title',
         render: (_title: Task['title'], task: Task) => (
-          <div className="flex min-w-60 flex-col gap-2 whitespace-normal">
-            <Typography.Text className="m-0 whitespace-normal text-sm font-semibold leading-6 text-slate-900">
-              {task.title}
-            </Typography.Text>
+          <div>
+            <Typography.Text strong>{task.title}</Typography.Text>
             {task.description ? (
-              <Typography.Text className="m-0 whitespace-normal text-sm leading-6 text-slate-500">
-                {task.description}
-              </Typography.Text>
+              <div>
+                <Typography.Text type="secondary">{task.description}</Typography.Text>
+              </div>
             ) : null}
           </div>
         ),
@@ -193,5 +189,23 @@ export const TasksTable = ({
     [developers, isUpdatingTask, onAssigneeChange, onStatusChange, pendingTaskId],
   );
 
-  return <Table<Task> columns={columns} dataSource={tasks} pagination={false} rowKey="id" />;
+  const expandable = useMemo<TableProps<Task>['expandable']>(
+    () => ({
+      expandedRowRender: (task: Task) =>
+        task.subtasks && task.subtasks.length > 0 ? (
+          <TasksTable
+            developers={developers}
+            isUpdatingTask={isUpdatingTask}
+            onAssigneeChange={onAssigneeChange}
+            onStatusChange={onStatusChange}
+            pendingTaskId={pendingTaskId}
+            tasks={task.subtasks}
+          />
+        ) : null,
+      rowExpandable: (task: Task) => (task.subtasks ? task.subtasks.length > 0 : false),
+    }),
+    [developers, isUpdatingTask, onAssigneeChange, onStatusChange, pendingTaskId],
+  );
+
+  return <Table<Task> columns={columns} dataSource={tasks} expandable={expandable} pagination={false} rowKey="id" />;
 };
