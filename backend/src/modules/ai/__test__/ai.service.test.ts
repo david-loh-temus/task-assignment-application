@@ -51,7 +51,7 @@ describe('ai.service', () => {
 
   it('builds request with system prompt and task data in contents', async () => {
     generateContent.mockResolvedValue({
-      text: '["Backend"]',
+      text: '[{"name":"Backend","normalized_name":"backend","source":"existing"}]',
     });
 
     jest.doMock('../skill-classification.prompt', () => ({
@@ -73,7 +73,7 @@ describe('ai.service', () => {
 
   it('sanitizes task title to prevent prompt injection', async () => {
     generateContent.mockResolvedValue({
-      text: '["Backend"]',
+      text: '[{"name":"Backend","normalized_name":"backend","source":"existing"}]',
     });
 
     jest.doMock('../skill-classification.prompt', () => ({
@@ -171,7 +171,12 @@ describe('ai.service', () => {
 
   it('deduplicates and parses valid skill names', async () => {
     generateContent.mockResolvedValue({
-      text: '["Backend", "Frontend", "Backend", "api_design"]',
+      text: JSON.stringify([
+        { name: 'Backend', normalized_name: 'backend', source: 'existing' },
+        { name: 'Frontend', normalized_name: 'frontend', source: 'existing' },
+        { name: 'Backend', normalized_name: 'backend', source: 'existing' },
+        { name: 'API Design', normalized_name: 'api_design', source: 'new' },
+      ]),
     });
 
     jest.doMock('../skill-classification.prompt', () => ({
@@ -184,9 +189,10 @@ describe('ai.service', () => {
     const result = await classifyTaskSkills('Build full-stack app', '[]');
 
     // Verify deduplication works
-    expect(result).toContain('Backend');
-    expect(result).toContain('Frontend');
-    expect(result).toContain('api_design');
-    expect(result.length).toBe(3); // No duplicates
+    expect(result).toEqual([
+      { name: 'Backend', normalizedName: 'backend', source: 'existing' },
+      { name: 'Frontend', normalizedName: 'frontend', source: 'existing' },
+      { name: 'API Design', normalizedName: 'api_design', source: 'new' },
+    ]);
   });
 });

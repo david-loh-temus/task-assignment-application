@@ -131,8 +131,72 @@ function dedupeIds(ids: string[] | undefined): string[] {
   return [];
 }
 
-function dedupeSkillNames(names: string[]): string[] {
-  return [...new Set(names.map((name) => name.trim().toLowerCase()).filter((name) => name.length > 0))];
+const ACRONYM_ALLOWLIST = new Set(['it', 'hr', 'qa', 'ui', 'ux', 'sre']);
+
+function normalizeSkillKey(value: string | null | undefined): string {
+  if (!value) {
+    return '';
+  }
+
+  return value
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[\s-]+/g, '_')
+    .replace(/[^a-zA-Z0-9_]/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase();
+}
+
+function titleCaseFromNormalized(normalizedName: string): string {
+  return normalizedName
+    .split('_')
+    .filter((word) => word.length > 0)
+    .map((word) => (ACRONYM_ALLOWLIST.has(word) ? word.toUpperCase() : word[0].toUpperCase() + word.slice(1)))
+    .join(' ');
+}
+
+function normalizeDisplayName(name: string, normalizedName: string): string {
+  const trimmed = name.trim().replace(/\s+/g, ' ');
+  if (trimmed.length === 0) {
+    return titleCaseFromNormalized(normalizedName);
+  }
+
+  const looksSnakeOrKebab = /[_-]/.test(trimmed);
+  const looksAllLowercase = trimmed === trimmed.toLowerCase();
+
+  if (looksSnakeOrKebab || looksAllLowercase) {
+    return titleCaseFromNormalized(normalizedName);
+  }
+
+  return trimmed;
+}
+
+function normalizeAiSkills(
+  aiSkills: Array<{ name: string; normalizedName: string }>,
+  existingSkillNames: string[],
+): Array<{ name: string; normalizedName: string }> {
+  const existingByNormalized = new Map(existingSkillNames.map((name) => [normalizeSkillKey(name), name] as const));
+  const resolvedByNormalized = new Map<string, { name: string; normalizedName: string }>();
+
+  for (const skill of aiSkills) {
+    const normalized = normalizeSkillKey(skill.normalizedName || skill.name);
+    if (!normalized) {
+      continue;
+    }
+
+    const existingName = existingByNormalized.get(normalized);
+    const resolvedName = existingName ?? normalizeDisplayName(skill.name, normalized);
+
+    if (!resolvedByNormalized.has(normalized)) {
+      resolvedByNormalized.set(normalized, {
+        name: resolvedName,
+        normalizedName: normalized,
+      });
+    }
+  }
+
+  return [...resolvedByNormalized.values()];
 }
 
 /**
@@ -187,15 +251,16 @@ async function assertSkillsExist(skillIds: string[]): Promise<void> {
   }
 }
 
-async function getGeneratedSkillNames(taskTitle: string): Promise<string[]> {
+async function getGeneratedSkillNames(taskTitle: string): Promise<Array<{ name: string; normalizedName: string }>> {
   const existingSkillNames = await getSkillNamesForAi();
-  const generatedSkillNames = await classifyTaskSkills(taskTitle, JSON.stringify(existingSkillNames));
+  const generatedSkills = await classifyTaskSkills(taskTitle, JSON.stringify(existingSkillNames));
+  const normalizedSkills = normalizeAiSkills(generatedSkills, existingSkillNames);
 
-  if (generatedSkillNames.length === 0) {
+  if (normalizedSkills.length === 0) {
     throw badRequest('Gemini did not return any required skills');
   }
 
-  return dedupeSkillNames(generatedSkillNames);
+  return normalizedSkills;
 }
 
 /**
@@ -210,22 +275,24 @@ async function getGeneratedSkillNames(taskTitle: string): Promise<string[]> {
  */
 async function resolveSkillIdsByName(
   transaction: Pick<Prisma.TransactionClient, 'skill'>,
-  skillNames: string[],
+  skills: Array<{ name: string; normalizedName: string }>,
 ): Promise<string[]> {
-  const normalizedSkillNames = dedupeSkillNames(skillNames);
+  const normalizedSkillNames = [...new Set(skills.map((skill) => skill.normalizedName))];
+  const skillsByNormalizedName = new Map(skills.map((skill) => [skill.normalizedName, skill.name] as const));
   const existingSkills = await transaction.skill.findMany({
     select: {
       id: true,
       name: true,
+      normalizedName: true,
     },
     where: {
-      name: {
+      normalizedName: {
         in: normalizedSkillNames,
       },
     },
   });
 
-  const existingSkillIdsByName = new Map(existingSkills.map((skill) => [skill.name, skill.id]));
+  const existingSkillIdsByName = new Map(existingSkills.map((skill) => [skill.normalizedName, skill.id]));
   const missingSkillNames = normalizedSkillNames.filter((name) => !existingSkillIdsByName.has(name));
 
   // Use Promise.all with upsert for missing skills to handle race conditions
@@ -235,12 +302,13 @@ async function resolveSkillIdsByName(
       missingSkillNames.map((skillName) =>
         transaction.skill.upsert({
           create: {
-            name: skillName,
+            name: skillsByNormalizedName.get(skillName) ?? titleCaseFromNormalized(skillName),
+            normalizedName: skillName,
             source: SkillSource.LLM,
           },
           update: {}, // No-op if exists - preserves original source
           where: {
-            name: skillName,
+            normalizedName: skillName,
           },
         }),
       ),
@@ -248,12 +316,12 @@ async function resolveSkillIdsByName(
 
     // Add newly created skills to the map
     createdSkills.forEach((skill) => {
-      existingSkillIdsByName.set(skill.name, skill.id);
+      existingSkillIdsByName.set(skill.normalizedName, skill.id);
     });
   }
 
   // Return IDs in the same order as input skill names
-  return normalizedSkillNames.map((name) => existingSkillIdsByName.get(name)!);
+  return skills.map((skill) => existingSkillIdsByName.get(skill.normalizedName)!);
 }
 
 /**
@@ -600,9 +668,9 @@ export async function createTask(input: TaskCreateBody): Promise<TaskReadDto> {
     return mapTask(task);
   }
 
-  const generatedSkillNames = await getGeneratedSkillNames(input.title);
+  const generatedSkills = await getGeneratedSkillNames(input.title);
   const task = await db.$transaction(async (transaction) => {
-    const generatedSkillIds = await resolveSkillIdsByName(transaction, generatedSkillNames);
+    const generatedSkillIds = await resolveSkillIdsByName(transaction, generatedSkills);
 
     assertDeveloperHasSkills(developer, generatedSkillIds);
 

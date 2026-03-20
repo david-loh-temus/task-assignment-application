@@ -14,12 +14,15 @@ describe('tasks.service - Subtasks Hierarchy', () => {
       const parentUuid = '11111111-1111-1111-1111-000000000010';
       const subtaskUuid = '11111111-1111-1111-1111-000000000020';
       const { createTask, databaseDouble } = await loadTasksService({
-        classifyTaskSkillsImplementation: async () => ['backend'],
-        getSkillNamesForAiImplementation: async () => ['backend', 'frontend'],
+        classifyTaskSkillsImplementation: async () => [
+          { name: 'Backend', normalizedName: 'backend', source: 'existing' },
+        ],
+        getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
         skillFindManyImplementation: async () => [
           {
             id: 'skill-backend',
-            name: 'backend',
+            name: 'Backend',
+            normalizedName: 'backend',
           },
         ],
         taskFindUniqueImplementation: async () => ({
@@ -234,12 +237,15 @@ describe('tasks.service - Subtasks Hierarchy', () => {
 
       let callCount = 0;
       const { createTask, databaseDouble } = await loadTasksService({
-        classifyTaskSkillsImplementation: async () => ['backend'],
-        getSkillNamesForAiImplementation: async () => ['backend', 'frontend'],
+        classifyTaskSkillsImplementation: async () => [
+          { name: 'Backend', normalizedName: 'backend', source: 'existing' },
+        ],
+        getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
         skillFindManyImplementation: async () => [
           {
             id: 'skill-backend',
-            name: 'backend',
+            name: 'Backend',
+            normalizedName: 'backend',
           },
         ],
         taskFindUniqueImplementation: async () => {

@@ -32,13 +32,14 @@ model Developer {
 }
 
 model Skill {
-  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String           @unique
-  source     SkillSource      @default(HUMAN) @map("skill_source")
-  createdAt  DateTime         @default(now()) @map("created_at")
-  updatedAt  DateTime         @updatedAt @map("updated_at")
-  developers DeveloperSkill[]
-  tasks      TaskSkill[]
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String           @unique
+  normalizedName String?          @unique @map("normalized_name")
+  source         SkillSource      @default(HUMAN) @map("skill_source")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  developers     DeveloperSkill[]
+  tasks          TaskSkill[]
 
   @@map("skills")
 }

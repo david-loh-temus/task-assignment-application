@@ -11,10 +11,12 @@ async function main(): Promise<void> {
       name: 'Frontend',
     },
     update: {
+      normalizedName: 'frontend',
       source: SkillSource.HUMAN,
     },
     create: {
       name: 'Frontend',
+      normalizedName: 'frontend',
       source: SkillSource.HUMAN,
     },
   });
@@ -24,10 +26,12 @@ async function main(): Promise<void> {
       name: 'Backend',
     },
     update: {
+      normalizedName: 'backend',
       source: SkillSource.HUMAN,
     },
     create: {
       name: 'Backend',
+      normalizedName: 'backend',
       source: SkillSource.HUMAN,
     },
   });

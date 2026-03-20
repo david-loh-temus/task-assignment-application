@@ -14,17 +14,21 @@ describe('tasks.service - Create Operations', () => {
     it('generates required skills with Gemini when skillIds are omitted', async () => {
       const backendSkillId = '33333333-3333-3333-3333-000000000001';
       const { createTask, databaseDouble } = await loadTasksService({
-        classifyTaskSkillsImplementation: async () => ['Backend'],
+        classifyTaskSkillsImplementation: async () => [
+          { name: 'Backend', normalizedName: 'backend', source: 'existing' },
+        ],
         getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
         skillFindManyImplementation: async () => [
           {
             id: backendSkillId,
-            name: 'backend',
+            name: 'Backend',
+            normalizedName: 'backend',
           },
         ],
         skillUpsertImplementation: async () => ({
           id: backendSkillId,
-          name: 'backend',
+          name: 'Backend',
+          normalizedName: 'backend',
           source: 'HUMAN',
         }),
         taskCreateImplementation: async () => ({
@@ -76,9 +80,10 @@ describe('tasks.service - Create Operations', () => {
         select: {
           id: true,
           name: true,
+          normalizedName: true,
         },
         where: {
-          name: {
+          normalizedName: {
             in: ['backend'],
           },
         },
@@ -203,12 +208,15 @@ describe('tasks.service - Create Operations', () => {
     it('creates new LLM skills when Gemini returns names that do not exist', async () => {
       const llmSkillId = '33333333-3333-3333-3333-000000000099';
       const { createTask, databaseDouble } = await loadTasksService({
-        classifyTaskSkillsImplementation: async () => ['api_design'],
+        classifyTaskSkillsImplementation: async () => [
+          { name: 'API Design', normalizedName: 'api_design', source: 'new' },
+        ],
         getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
         skillFindManyImplementation: async () => [],
         skillUpsertImplementation: async () => ({
           id: llmSkillId,
-          name: 'api_design',
+          name: 'API Design',
+          normalizedName: 'api_design',
           source: 'LLM',
         }),
         taskCreateImplementation: async () => ({
@@ -222,7 +230,7 @@ describe('tasks.service - Create Operations', () => {
             {
               skill: {
                 id: llmSkillId,
-                name: 'api_design',
+                name: 'API Design',
               },
             },
           ],
@@ -242,18 +250,19 @@ describe('tasks.service - Create Operations', () => {
         skills: [
           {
             id: llmSkillId,
-            name: 'api_design',
+            name: 'API Design',
           },
         ],
       });
       expect(databaseDouble.skill.upsert).toHaveBeenCalledWith({
         create: {
-          name: 'api_design',
+          name: 'API Design',
+          normalizedName: 'api_design',
           source: 'LLM',
         },
         update: {},
         where: {
-          name: 'api_design',
+          normalizedName: 'api_design',
         },
       });
     });
@@ -262,7 +271,10 @@ describe('tasks.service - Create Operations', () => {
       const devUuid = '22222222-2222-2222-2222-000000000001';
       const backendSkillId = '33333333-3333-3333-3333-000000000001';
       const { createTask, databaseDouble } = await loadTasksService({
-        classifyTaskSkillsImplementation: async () => ['Backend', 'api_design'],
+        classifyTaskSkillsImplementation: async () => [
+          { name: 'Backend', normalizedName: 'backend', source: 'existing' },
+          { name: 'API Design', normalizedName: 'api_design', source: 'new' },
+        ],
         developerFindUniqueImplementation: async () => ({
           id: devUuid,
           skills: [
@@ -276,11 +288,13 @@ describe('tasks.service - Create Operations', () => {
           {
             id: backendSkillId,
             name: 'Backend',
+            normalizedName: 'backend',
           },
         ],
         skillUpsertImplementation: async () => ({
           id: '33333333-3333-3333-3333-000000000002',
-          name: 'api_design',
+          name: 'API Design',
+          normalizedName: 'api_design',
           source: 'LLM',
         }),
       });
@@ -361,12 +375,15 @@ describe('tasks.service - Create Operations', () => {
     it('creates a task with only title (no optional fields)', async () => {
       const backendSkillId = '33333333-3333-3333-3333-000000000001';
       const { createTask, databaseDouble } = await loadTasksService({
-        classifyTaskSkillsImplementation: async () => ['Backend'],
+        classifyTaskSkillsImplementation: async () => [
+          { name: 'Backend', normalizedName: 'backend', source: 'existing' },
+        ],
         getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
         skillFindManyImplementation: async () => [
           {
             id: backendSkillId,
-            name: 'backend',
+            name: 'Backend',
+            normalizedName: 'backend',
           },
         ],
         taskCreateImplementation: async () => ({
@@ -422,12 +439,15 @@ describe('tasks.service - Create Operations', () => {
     it('creates a task with only title and description', async () => {
       const backendSkillId = '33333333-3333-3333-3333-000000000001';
       const { createTask, databaseDouble } = await loadTasksService({
-        classifyTaskSkillsImplementation: async () => ['Backend'],
+        classifyTaskSkillsImplementation: async () => [
+          { name: 'Backend', normalizedName: 'backend', source: 'existing' },
+        ],
         getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
         skillFindManyImplementation: async () => [
           {
             id: backendSkillId,
-            name: 'backend',
+            name: 'Backend',
+            normalizedName: 'backend',
           },
         ],
         taskCreateImplementation: async () => ({
@@ -482,12 +502,15 @@ describe('tasks.service - Create Operations', () => {
     it('creates a task with title and status (no other optional fields)', async () => {
       const backendSkillId = '33333333-3333-3333-3333-000000000001';
       const { createTask, databaseDouble } = await loadTasksService({
-        classifyTaskSkillsImplementation: async () => ['Backend'],
+        classifyTaskSkillsImplementation: async () => [
+          { name: 'Backend', normalizedName: 'backend', source: 'existing' },
+        ],
         getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
         skillFindManyImplementation: async () => [
           {
             id: backendSkillId,
-            name: 'backend',
+            name: 'Backend',
+            normalizedName: 'backend',
           },
         ],
         taskCreateImplementation: async () => ({
@@ -551,12 +574,15 @@ describe('tasks.service - Create Operations', () => {
             },
           ],
         }),
-        classifyTaskSkillsImplementation: async () => ['Backend'],
+        classifyTaskSkillsImplementation: async () => [
+          { name: 'Backend', normalizedName: 'backend', source: 'existing' },
+        ],
         getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
         skillFindManyImplementation: async () => [
           {
             id: backendSkillId,
-            name: 'backend',
+            name: 'Backend',
+            normalizedName: 'backend',
           },
         ],
         taskCreateImplementation: async () => ({
@@ -624,12 +650,15 @@ describe('tasks.service - Create Operations', () => {
           id: parentUuid,
           parentTaskId: null,
         }),
-        classifyTaskSkillsImplementation: async () => ['Backend'],
+        classifyTaskSkillsImplementation: async () => [
+          { name: 'Backend', normalizedName: 'backend', source: 'existing' },
+        ],
         getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
         skillFindManyImplementation: async () => [
           {
             id: backendSkillId,
-            name: 'backend',
+            name: 'Backend',
+            normalizedName: 'backend',
           },
         ],
         taskCreateImplementation: async () => ({
