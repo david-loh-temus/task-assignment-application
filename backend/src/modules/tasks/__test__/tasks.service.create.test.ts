@@ -356,4 +356,650 @@ describe('tasks.service - Create Operations', () => {
       });
     });
   });
+
+  describe('createTask - Field Combinations Coverage', () => {
+    it('creates a task with only title (no optional fields)', async () => {
+      const backendSkillId = '33333333-3333-3333-3333-000000000001';
+      const { createTask, databaseDouble } = await loadTasksService({
+        classifyTaskSkillsImplementation: async () => ['Backend'],
+        getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
+        skillFindManyImplementation: async () => [
+          {
+            id: backendSkillId,
+            name: 'backend',
+          },
+        ],
+        taskCreateImplementation: async () => ({
+          assignedDeveloper: null,
+          createdAt: new Date('2026-03-18T00:00:00.000Z'),
+          description: null,
+          displayId: 100,
+          id: '11111111-1111-1111-1111-000000000100',
+          parentTask: null,
+          skills: [
+            {
+              skill: {
+                id: backendSkillId,
+                name: 'Backend',
+              },
+            },
+          ],
+          status: TaskStatus.TODO,
+          subtasks: [],
+          title: 'Minimal Task',
+          updatedAt: new Date('2026-03-18T01:00:00.000Z'),
+        }),
+      });
+
+      await expect(
+        createTask({
+          title: 'Minimal Task',
+        }),
+      ).resolves.toMatchObject({
+        displayId: 100,
+        assignedDeveloper: null,
+        description: null,
+        parentTask: null,
+        status: TaskStatus.TODO,
+        title: 'Minimal Task',
+      });
+
+      expect(databaseDouble.task.create).toHaveBeenCalledWith({
+        data: {
+          skills: {
+            create: [
+              {
+                skillId: backendSkillId,
+              },
+            ],
+          },
+          title: 'Minimal Task',
+        },
+        ...expectedTaskReadInclude,
+      });
+    });
+
+    it('creates a task with only title and description', async () => {
+      const backendSkillId = '33333333-3333-3333-3333-000000000001';
+      const { createTask, databaseDouble } = await loadTasksService({
+        classifyTaskSkillsImplementation: async () => ['Backend'],
+        getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
+        skillFindManyImplementation: async () => [
+          {
+            id: backendSkillId,
+            name: 'backend',
+          },
+        ],
+        taskCreateImplementation: async () => ({
+          assignedDeveloper: null,
+          createdAt: new Date('2026-03-18T00:00:00.000Z'),
+          description: 'Task description',
+          displayId: 101,
+          id: '11111111-1111-1111-1111-000000000101',
+          parentTask: null,
+          skills: [
+            {
+              skill: {
+                id: backendSkillId,
+                name: 'Backend',
+              },
+            },
+          ],
+          status: TaskStatus.TODO,
+          subtasks: [],
+          title: 'Task with Description',
+          updatedAt: new Date('2026-03-18T01:00:00.000Z'),
+        }),
+      });
+
+      await expect(
+        createTask({
+          title: 'Task with Description',
+          description: 'Task description',
+        }),
+      ).resolves.toMatchObject({
+        displayId: 101,
+        description: 'Task description',
+        status: TaskStatus.TODO,
+      });
+
+      expect(databaseDouble.task.create).toHaveBeenCalledWith({
+        data: {
+          description: 'Task description',
+          skills: {
+            create: [
+              {
+                skillId: backendSkillId,
+              },
+            ],
+          },
+          title: 'Task with Description',
+        },
+        ...expectedTaskReadInclude,
+      });
+    });
+
+    it('creates a task with title and status (no other optional fields)', async () => {
+      const backendSkillId = '33333333-3333-3333-3333-000000000001';
+      const { createTask, databaseDouble } = await loadTasksService({
+        classifyTaskSkillsImplementation: async () => ['Backend'],
+        getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
+        skillFindManyImplementation: async () => [
+          {
+            id: backendSkillId,
+            name: 'backend',
+          },
+        ],
+        taskCreateImplementation: async () => ({
+          assignedDeveloper: null,
+          createdAt: new Date('2026-03-18T00:00:00.000Z'),
+          description: null,
+          displayId: 102,
+          id: '11111111-1111-1111-1111-000000000102',
+          parentTask: null,
+          skills: [
+            {
+              skill: {
+                id: backendSkillId,
+                name: 'Backend',
+              },
+            },
+          ],
+          status: TaskStatus.IN_PROGRESS,
+          subtasks: [],
+          title: 'Task with Status',
+          updatedAt: new Date('2026-03-18T01:00:00.000Z'),
+        }),
+      });
+
+      await expect(
+        createTask({
+          title: 'Task with Status',
+          status: TaskStatus.IN_PROGRESS,
+        }),
+      ).resolves.toMatchObject({
+        displayId: 102,
+        status: TaskStatus.IN_PROGRESS,
+        title: 'Task with Status',
+      });
+
+      expect(databaseDouble.task.create).toHaveBeenCalledWith({
+        data: {
+          status: TaskStatus.IN_PROGRESS,
+          skills: {
+            create: [
+              {
+                skillId: backendSkillId,
+              },
+            ],
+          },
+          title: 'Task with Status',
+        },
+        ...expectedTaskReadInclude,
+      });
+    });
+
+    it('creates a task with title, status, and assignedDeveloper (no skills/parent/description)', async () => {
+      const devUuid = '22222222-2222-2222-2222-000000000002';
+      const backendSkillId = '33333333-3333-3333-3333-000000000001';
+      const { createTask, databaseDouble } = await loadTasksService({
+        developerFindUniqueImplementation: async () => ({
+          id: devUuid,
+          skills: [
+            {
+              skillId: backendSkillId,
+            },
+          ],
+        }),
+        classifyTaskSkillsImplementation: async () => ['Backend'],
+        getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
+        skillFindManyImplementation: async () => [
+          {
+            id: backendSkillId,
+            name: 'backend',
+          },
+        ],
+        taskCreateImplementation: async () => ({
+          assignedDeveloper: {
+            id: devUuid,
+            name: 'Bob',
+          },
+          createdAt: new Date('2026-03-18T00:00:00.000Z'),
+          description: null,
+          displayId: 103,
+          id: '11111111-1111-1111-1111-000000000103',
+          parentTask: null,
+          skills: [
+            {
+              skill: {
+                id: backendSkillId,
+                name: 'Backend',
+              },
+            },
+          ],
+          status: TaskStatus.IN_PROGRESS,
+          subtasks: [],
+          title: 'Task Assigned to Dev',
+          updatedAt: new Date('2026-03-18T01:00:00.000Z'),
+        }),
+      });
+
+      await expect(
+        createTask({
+          title: 'Task Assigned to Dev',
+          status: TaskStatus.IN_PROGRESS,
+          assignedDeveloperId: devUuid,
+        }),
+      ).resolves.toMatchObject({
+        displayId: 103,
+        assignedDeveloper: {
+          id: devUuid,
+          name: 'Bob',
+        },
+        status: TaskStatus.IN_PROGRESS,
+      });
+
+      expect(databaseDouble.task.create).toHaveBeenCalledWith({
+        data: {
+          assignedDeveloperId: devUuid,
+          status: TaskStatus.IN_PROGRESS,
+          skills: {
+            create: [
+              {
+                skillId: backendSkillId,
+              },
+            ],
+          },
+          title: 'Task Assigned to Dev',
+        },
+        ...expectedTaskReadInclude,
+      });
+    });
+
+    it('creates a task with title and parent (no status/skills/assignedDeveloper/description)', async () => {
+      const parentUuid = '11111111-1111-1111-1111-000000000050';
+      const backendSkillId = '33333333-3333-3333-3333-000000000001';
+      const { createTask, databaseDouble } = await loadTasksService({
+        taskFindUniqueImplementation: async () => ({
+          id: parentUuid,
+          parentTaskId: null,
+        }),
+        classifyTaskSkillsImplementation: async () => ['Backend'],
+        getSkillNamesForAiImplementation: async () => ['Backend', 'Frontend'],
+        skillFindManyImplementation: async () => [
+          {
+            id: backendSkillId,
+            name: 'backend',
+          },
+        ],
+        taskCreateImplementation: async () => ({
+          assignedDeveloper: null,
+          createdAt: new Date('2026-03-18T00:00:00.000Z'),
+          description: null,
+          displayId: 104,
+          id: '11111111-1111-1111-1111-000000000104',
+          parentTask: {
+            displayId: 1,
+            id: parentUuid,
+            title: 'Parent Task',
+          },
+          skills: [
+            {
+              skill: {
+                id: backendSkillId,
+                name: 'Backend',
+              },
+            },
+          ],
+          status: TaskStatus.TODO,
+          subtasks: [],
+          title: 'Subtask without Status',
+          updatedAt: new Date('2026-03-18T01:00:00.000Z'),
+        }),
+      });
+
+      await expect(
+        createTask({
+          title: 'Subtask without Status',
+          parentTaskId: parentUuid,
+        }),
+      ).resolves.toMatchObject({
+        displayId: 104,
+        parentTask: {
+          id: parentUuid,
+        },
+        status: TaskStatus.TODO,
+      });
+
+      expect(databaseDouble.task.create).toHaveBeenCalledWith({
+        data: {
+          parentTaskId: parentUuid,
+          skills: {
+            create: [
+              {
+                skillId: backendSkillId,
+              },
+            ],
+          },
+          title: 'Subtask without Status',
+        },
+        ...expectedTaskReadInclude,
+      });
+    });
+
+    it('creates a task with all fields: title, status, assignedDeveloper, skillIds, parentTaskId, description', async () => {
+      const devUuid = '22222222-2222-2222-2222-000000000003';
+      const skillUuid = '33333333-3333-3333-3333-000000000003';
+      const parentUuid = '11111111-1111-1111-1111-000000000051';
+
+      const { createTask, databaseDouble } = await loadTasksService({
+        developerFindUniqueImplementation: async () => ({
+          id: devUuid,
+          skills: [
+            {
+              skillId: skillUuid,
+            },
+          ],
+        }),
+        skillFindManyImplementation: async () => [
+          {
+            id: skillUuid,
+            name: 'Frontend',
+          },
+        ],
+        taskFindUniqueImplementation: async () => ({
+          id: parentUuid,
+          parentTaskId: null,
+        }),
+        taskCreateImplementation: async () => ({
+          assignedDeveloper: {
+            id: devUuid,
+            name: 'Charlie',
+          },
+          createdAt: new Date('2026-03-20T07:37:54.905Z'),
+          description: 'Complete implementation',
+          displayId: 105,
+          id: '11111111-1111-1111-1111-000000000105',
+          parentTask: {
+            displayId: 1,
+            id: parentUuid,
+            title: 'Parent Task Title',
+          },
+          skills: [
+            {
+              skill: {
+                id: skillUuid,
+                name: 'Frontend',
+              },
+            },
+          ],
+          status: TaskStatus.IN_PROGRESS,
+          subtasks: [],
+          title: 'Full Featured Subtask',
+          updatedAt: new Date('2026-03-20T07:37:54.905Z'),
+        }),
+      });
+
+      await expect(
+        createTask({
+          title: 'Full Featured Subtask',
+          description: 'Complete implementation',
+          assignedDeveloperId: devUuid,
+          skillIds: [skillUuid],
+          status: TaskStatus.IN_PROGRESS,
+          parentTaskId: parentUuid,
+        }),
+      ).resolves.toMatchObject({
+        displayId: 105,
+        title: 'Full Featured Subtask',
+        description: 'Complete implementation',
+        assignedDeveloper: {
+          id: devUuid,
+          name: 'Charlie',
+        },
+        skills: [
+          {
+            id: skillUuid,
+            name: 'Frontend',
+          },
+        ],
+        status: TaskStatus.IN_PROGRESS,
+        parentTask: {
+          id: parentUuid,
+        },
+      });
+
+      expect(databaseDouble.task.create).toHaveBeenCalledWith({
+        data: {
+          assignedDeveloperId: devUuid,
+          description: 'Complete implementation',
+          parentTaskId: parentUuid,
+          status: TaskStatus.IN_PROGRESS,
+          skills: {
+            create: [
+              {
+                skillId: skillUuid,
+              },
+            ],
+          },
+          title: 'Full Featured Subtask',
+        },
+        ...expectedTaskReadInclude,
+      });
+    });
+
+    it('creates subtask with all fields including null description - exact user scenario', async () => {
+      // Exact payload from user issue: ALL fields including status, assignedDeveloper, skillIds, parentTaskId
+      const devUuid = '0f1919ca-c313-4880-b225-0039256dc47d';
+      const skillUuid = '29f35936-dbdc-4c7e-ad79-52aacb8a5911';
+      const parentUuid = '1c4ae6f7-3010-41d0-b5e0-901891f6bbb5';
+
+      const { createTask, databaseDouble } = await loadTasksService({
+        developerFindUniqueImplementation: async () => ({
+          id: devUuid,
+          skills: [
+            {
+              skillId: skillUuid,
+            },
+          ],
+        }),
+        skillFindManyImplementation: async () => [
+          {
+            id: skillUuid,
+            name: 'Frontend',
+          },
+        ],
+        taskFindUniqueImplementation: async () => ({
+          id: parentUuid,
+          parentTaskId: null,
+        }),
+        taskCreateImplementation: async () => ({
+          assignedDeveloper: {
+            id: devUuid,
+            name: 'Alice',
+          },
+          createdAt: new Date('2026-03-20T07:49:48.365Z'),
+          description: null,
+          displayId: 7,
+          id: '1b5cc42f-da89-4436-9115-3b8ff255f602',
+          parentTask: {
+            displayId: 1,
+            id: parentUuid,
+            title: 'Parent Task',
+          },
+          skills: [
+            {
+              skill: {
+                id: skillUuid,
+                name: 'Frontend',
+              },
+            },
+          ],
+          status: TaskStatus.IN_PROGRESS,
+          subtasks: [],
+          title: 'Add Subtask for #1 V4',
+          updatedAt: new Date('2026-03-20T07:49:48.365Z'),
+        }),
+      });
+
+      await expect(
+        createTask({
+          title: 'Add Subtask for #1 V4',
+          description: null,
+          assignedDeveloperId: devUuid,
+          skillIds: [skillUuid],
+          status: TaskStatus.IN_PROGRESS,
+          parentTaskId: parentUuid,
+        }),
+      ).resolves.toMatchObject({
+        displayId: 7,
+        title: 'Add Subtask for #1 V4',
+        description: null,
+        assignedDeveloper: {
+          id: devUuid,
+          name: 'Alice',
+        },
+        skills: [
+          {
+            id: skillUuid,
+            name: 'Frontend',
+          },
+        ],
+        status: TaskStatus.IN_PROGRESS,
+        parentTask: {
+          id: parentUuid,
+        },
+      });
+
+      // Verify all fields are passed to database.task.create
+      expect(databaseDouble.task.create).toHaveBeenCalledWith({
+        data: {
+          assignedDeveloperId: devUuid,
+          description: null,
+          parentTaskId: parentUuid,
+          status: TaskStatus.IN_PROGRESS,
+          skills: {
+            create: [
+              {
+                skillId: skillUuid,
+              },
+            ],
+          },
+          title: 'Add Subtask for #1 V4',
+        },
+        ...expectedTaskReadInclude,
+      });
+    });
+
+    it('[DIAGNOSTIC] reports error if assigned developer ID does not exist in database', async () => {
+      const nonExistentDevUuid = '0f1919ca-c313-4880-b225-9999999999999';
+      const skillUuid = '29f35936-dbdc-4c7e-ad79-52aacb8a5911';
+      const parentUuid = '1c4ae6f7-3010-41d0-b5e0-901891f6bbb5';
+
+      const { createTask } = await loadTasksService({
+        developerFindUniqueImplementation: async () => null, // Developer doesn't exist
+        skillFindManyImplementation: async () => [
+          {
+            id: skillUuid,
+            name: 'Frontend',
+          },
+        ],
+        taskFindUniqueImplementation: async () => ({
+          id: parentUuid,
+          parentTaskId: null,
+        }),
+      });
+
+      await expect(
+        createTask({
+          title: 'Add Subtask for #1 V4',
+          description: null,
+          assignedDeveloperId: nonExistentDevUuid,
+          skillIds: [skillUuid],
+          status: TaskStatus.IN_PROGRESS,
+          parentTaskId: parentUuid,
+        }),
+      ).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+        message: 'Developer not found',
+        status: StatusCodes.NOT_FOUND,
+      });
+    });
+
+    it('[DIAGNOSTIC] reports error if skill ID does not exist in database', async () => {
+      const devUuid = '0f1919ca-c313-4880-b225-0039256dc47d';
+      const nonExistentSkillUuid = '29f35936-dbdc-4c7e-ad79-9999999999999';
+      const parentUuid = '1c4ae6f7-3010-41d0-b5e0-901891f6bbb5';
+
+      const { createTask } = await loadTasksService({
+        developerFindUniqueImplementation: async () => ({
+          id: devUuid,
+          skills: [
+            {
+              skillId: nonExistentSkillUuid,
+            },
+          ],
+        }),
+        skillFindManyImplementation: async () => [], // Skill doesn't exist in response
+        taskFindUniqueImplementation: async () => ({
+          id: parentUuid,
+          parentTaskId: null,
+        }),
+      });
+
+      await expect(
+        createTask({
+          title: 'Add Subtask for #1 V4',
+          description: null,
+          assignedDeveloperId: devUuid,
+          skillIds: [nonExistentSkillUuid],
+          status: TaskStatus.IN_PROGRESS,
+          parentTaskId: parentUuid,
+        }),
+      ).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+        message: 'One or more skills were not found',
+        status: StatusCodes.NOT_FOUND,
+      });
+    });
+
+    it('[DIAGNOSTIC] reports error if parent task ID does not exist in database', async () => {
+      const devUuid = '0f1919ca-c313-4880-b225-0039256dc47d';
+      const skillUuid = '29f35936-dbdc-4c7e-ad79-52aacb8a5911';
+      const nonExistentParentUuid = '1c4ae6f7-3010-41d0-b5e0-9999999999999';
+
+      const { createTask } = await loadTasksService({
+        developerFindUniqueImplementation: async () => ({
+          id: devUuid,
+          skills: [
+            {
+              skillId: skillUuid,
+            },
+          ],
+        }),
+        skillFindManyImplementation: async () => [
+          {
+            id: skillUuid,
+            name: 'Frontend',
+          },
+        ],
+        taskFindUniqueImplementation: async () => null, // Parent doesn't exist
+      });
+
+      await expect(
+        createTask({
+          title: 'Add Subtask for #1 V4',
+          description: null,
+          assignedDeveloperId: devUuid,
+          skillIds: [skillUuid],
+          status: TaskStatus.IN_PROGRESS,
+          parentTaskId: nonExistentParentUuid,
+        }),
+      ).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+        message: 'Parent task not found',
+        status: StatusCodes.NOT_FOUND,
+      });
+    });
+  });
 });

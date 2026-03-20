@@ -12,6 +12,7 @@ export const taskCreateBodySchema = z.object({
   description: z.string().trim().optional().nullable(),
   parentTaskId: uuidSchema.nullable().optional(),
   skillIds: z.array(uuidSchema).optional(),
+  status: z.enum(Object.values(TaskStatus) as [string, ...string[]]).optional(),
   title: z.string({ error: 'Task title is required' }).trim().min(1, 'Task title is required'),
 });
 
@@ -22,7 +23,7 @@ export const taskUpdateBodySchema = z
     assignedDeveloperId: uuidSchema.nullable().optional(),
     parentTaskId: uuidSchema.nullable().optional(),
     skillIds: z.array(uuidSchema).optional(),
-    status: z.nativeEnum(TaskStatus).optional(),
+    status: z.enum(Object.values(TaskStatus) as [string, ...string[]]).optional(),
   })
   .refine((value) => Object.values(value).some((field) => field !== undefined), {
     message: 'At least one task field must be provided',

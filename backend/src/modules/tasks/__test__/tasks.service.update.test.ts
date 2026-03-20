@@ -120,13 +120,66 @@ describe('tasks.service - Update Operations', () => {
           },
           subtasks: {
             select: {
+              assignedDeveloper: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
               createdAt: true,
               description: true,
               displayId: true,
               id: true,
+              skills: {
+                include: {
+                  skill: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+                orderBy: {
+                  skill: {
+                    name: 'asc',
+                  },
+                },
+              },
               status: true,
               title: true,
               updatedAt: true,
+              subtasks: {
+                select: {
+                  assignedDeveloper: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                  createdAt: true,
+                  description: true,
+                  displayId: true,
+                  id: true,
+                  skills: {
+                    include: {
+                      skill: {
+                        select: {
+                          id: true,
+                          name: true,
+                        },
+                      },
+                    },
+                    orderBy: {
+                      skill: {
+                        name: 'asc',
+                      },
+                    },
+                  },
+                  status: true,
+                  title: true,
+                  updatedAt: true,
+                },
+              },
             },
           },
         },
