@@ -19,11 +19,11 @@ const statusOptions = [
 
 type TaskStatusSelectProps = {
   disabled?: boolean;
-  onChange: (status: TaskStatus) => void;
-  value: TaskStatus;
+  onChange?: (status: TaskStatus) => void;
+  value?: TaskStatus;
 };
 
-export const TaskStatusSelect = ({ disabled = false, onChange, value }: TaskStatusSelectProps) => {
+export const TaskStatusSelect = ({ disabled = false, onChange, value = 'TODO' }: TaskStatusSelectProps) => {
   return (
     <Select
       aria-label="Task status"

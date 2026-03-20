@@ -116,7 +116,8 @@ export default [
         },
       ],
       'react/prefer-stateless-function': 'error',
-
+      'react-perf/jsx-no-new-function-as-prop': 'error',
+      'react-perf/jsx-no-new-object-as-prop': 'error',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
 

@@ -6,6 +6,17 @@ import { AppShell } from '@app/layout/AppShell';
 
 import type { QueryClient } from '@tanstack/react-query';
 
+const DEV_TOOLS_CONFIG = {
+  position: 'bottom-right' as const,
+};
+
+const DEV_TOOLS_PLUGINS = [
+  {
+    name: 'Tanstack Router',
+    render: <TanStackRouterDevtoolsPanel />,
+  },
+];
+
 const RootLayout = () => {
   return (
     <>
@@ -13,17 +24,7 @@ const RootLayout = () => {
         <Outlet />
       </AppShell>
 
-      <TanStackDevtools
-        config={{
-          position: 'bottom-right',
-        }}
-        plugins={[
-          {
-            name: 'Tanstack Router',
-            render: <TanStackRouterDevtoolsPanel />,
-          },
-        ]}
-      />
+      <TanStackDevtools config={DEV_TOOLS_CONFIG} plugins={DEV_TOOLS_PLUGINS} />
     </>
   );
 };

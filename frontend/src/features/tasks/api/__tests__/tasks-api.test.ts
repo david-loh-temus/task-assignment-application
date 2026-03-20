@@ -1,10 +1,36 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { taskCollectionFixture, taskFixture } from '@features/tasks/__fixtures__/task-fixtures';
-import { getTaskById, getTasks, updateTaskById } from '../tasks-api';
+import { createTask, getTaskById, getTasks, updateTaskById } from '../tasks-api';
 import type { AxiosResponse } from 'axios';
 
 describe('tasks-api', () => {
+  it('creates and unwraps a task', async () => {
+    const post = vi.fn().mockResolvedValue({
+      data: {
+        data: taskFixture,
+      },
+    } satisfies Pick<AxiosResponse, 'data'>);
+
+    await expect(
+      createTask(
+        {
+          title: taskFixture.title,
+          description: taskFixture.description,
+          skillIds: taskFixture.skills.map((skill) => skill.id),
+          status: taskFixture.status,
+        },
+        { post } as never,
+      ),
+    ).resolves.toEqual(taskFixture);
+    expect(post).toHaveBeenCalledWith('/tasks', {
+      title: taskFixture.title,
+      description: taskFixture.description,
+      skillIds: taskFixture.skills.map((skill) => skill.id),
+      status: taskFixture.status,
+    });
+  });
+
   it('fetches and unwraps the task list', async () => {
     const get = vi.fn().mockResolvedValue({
       data: {

@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { Typography } from 'antd';
 
 import { TasksTable } from '@features/tasks/components/TasksTable';
 import { useUpdateTaskMutation } from '@features/tasks/mutations/use-update-task-mutation';
@@ -36,14 +37,10 @@ export const TaskListPage = ({ developers, tasks }: TaskListPageProps) => {
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-[1120px] flex-col gap-6 h-full">
-      <header className="flex flex-col gap-2 flex-none">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-[32px] font-semibold leading-tight text-slate-900 md:text-[32px]">Tasks</h1>
-          <p className="max-w-3xl text-sm leading-6 text-slate-500 md:text-[15px]">
-            Review task requirements, update progress, and assign compatible developers.
-          </p>
-        </div>
+    <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-6 h-full">
+      <header className="flex flex-col flex-none">
+        <Typography.Title level={1}>Tasks</Typography.Title>
+        <Typography.Text>Review task requirements, update progress, and assign compatible developers.</Typography.Text>
       </header>
 
       <section aria-label="tasks table" className="flex-1 overflow-auto border border-slate-200 bg-white shadow-sm">
@@ -56,6 +53,6 @@ export const TaskListPage = ({ developers, tasks }: TaskListPageProps) => {
           tasks={tasks}
         />
       </section>
-    </main>
+    </div>
   );
 };

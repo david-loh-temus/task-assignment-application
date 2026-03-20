@@ -20,8 +20,7 @@ const navigationItems: MenuProps['items'] = [
   {
     key: '/create-task',
     icon: <ProfileOutlined />,
-    disabled: true,
-    label: 'Create Task',
+    label: <Link to="/create-task">Create Task</Link>,
   },
   {
     key: '/team',
