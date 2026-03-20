@@ -12,6 +12,9 @@ const mutate = vi.fn();
 const frontendSkill = {
   id: '29f35936-dbdc-4c7e-ad79-52aacb8a5911',
   name: 'Frontend',
+  source: 'HUMAN' as const,
+  createdAt: '2026-01-01T00:00:00Z',
+  updatedAt: '2026-01-01T00:00:00Z',
 };
 const compatibleTask = {
   ...taskCollectionFixture[0],
@@ -21,12 +24,22 @@ const compatibleTask = {
   },
   skills: [frontendSkill],
 };
+const skillsFixture = [frontendSkill];
+
+const createMutateAsync = vi.fn();
 
 vi.mock('@features/tasks/mutations/use-update-task-mutation', () => ({
   useUpdateTaskMutation: () => ({
     isPending: false,
     mutate,
     variables: undefined,
+  }),
+}));
+
+vi.mock('@features/tasks/mutations/use-create-task-mutation', () => ({
+  useCreateTaskMutation: () => ({
+    isPending: false,
+    mutateAsync: createMutateAsync,
   }),
 }));
 
@@ -64,16 +77,18 @@ beforeAll(() => {
 describe('TaskListPage', () => {
   beforeEach(() => {
     mutate.mockReset();
+    createMutateAsync.mockReset();
   });
 
   it('renders the task table with the expected task attributes', () => {
-    render(<TaskListPage developers={developerCollectionFixture} tasks={[compatibleTask]} />);
+    render(<TaskListPage developers={developerCollectionFixture} skills={skillsFixture} tasks={[compatibleTask]} />);
 
     expect(screen.getByRole('heading', { name: 'Tasks' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Task Title' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Skills' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Assignee' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Actions' })).toBeInTheDocument();
     expect(screen.getByText('Build tasks page')).toBeInTheDocument();
     expect(screen.getByText('Implement the read path')).toBeInTheDocument();
     expect(screen.getByText('Frontend')).toBeInTheDocument();
@@ -83,6 +98,7 @@ describe('TaskListPage', () => {
     render(
       <TaskListPage
         developers={developerCollectionFixture}
+        skills={skillsFixture}
         tasks={[
           {
             ...compatibleTask,
@@ -96,7 +112,7 @@ describe('TaskListPage', () => {
   });
 
   it('sends an inline status update when the status dropdown changes', () => {
-    render(<TaskListPage developers={developerCollectionFixture} tasks={[compatibleTask]} />);
+    render(<TaskListPage developers={developerCollectionFixture} skills={skillsFixture} tasks={[compatibleTask]} />);
 
     const statusComboboxes = screen.getAllByRole('combobox', { name: 'Task status' });
 
@@ -127,6 +143,7 @@ describe('TaskListPage', () => {
             tasks: [],
           },
         ]}
+        skills={skillsFixture}
         tasks={[compatibleTask]}
       />,
     );
