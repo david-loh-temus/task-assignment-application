@@ -22,7 +22,16 @@ export type Task = {
   updatedAt: string;
 };
 
+export type CreateTaskInput = {
+  title: string;
+  description?: string | null;
+  assignedDeveloperId?: string | null;
+  skillIds?: string[];
+  status?: TaskStatus;
+};
+
 export type UpdateTaskInput = {
   assignedDeveloperId?: string | null;
+  skillIds?: string[];
   status?: TaskStatus;
 };
