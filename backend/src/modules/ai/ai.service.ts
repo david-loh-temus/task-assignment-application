@@ -3,11 +3,17 @@ import type { GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
 
 import config from '../../config/config';
+import logger from '../../lib/logger';
 import { serviceUnavailable } from '../../shared/errors';
 
 import { skillClassificationSystemPrompt } from './skill-classification.prompt';
 
-const skillNameArraySchema = z.array(z.string().trim().min(1, 'Skill name cannot be empty'));
+const skillEntrySchema = z.object({
+  name: z.string().trim().min(1, 'Skill name cannot be empty'),
+  normalized_name: z.string().trim().min(1, 'Normalized skill name cannot be empty'),
+  source: z.string().trim().min(1, 'Skill source cannot be empty'),
+});
+const skillEntryArraySchema = z.array(skillEntrySchema);
 
 let geminiClient: GoogleGenAI | null = null;
 
@@ -98,7 +104,13 @@ Return the required skills now.
  * @throws SERVICE_UNAVAILABLE if the response is empty, not valid JSON, or does
  * not conform to the expected schema.
  */
-function parseSkillNames(rawResponse: string | undefined): string[] {
+export type AiSkillEntry = {
+  name: string;
+  normalizedName: string;
+  source: string;
+};
+
+function parseSkillEntries(rawResponse: string | undefined): AiSkillEntry[] {
   if (!rawResponse) {
     throw serviceUnavailable('Gemini returned an empty skill classification response');
   }
@@ -111,11 +123,26 @@ function parseSkillNames(rawResponse: string | undefined): string[] {
     throw serviceUnavailable('Gemini returned an invalid skill classification response');
   }
 
+  let parsedEntries: Array<{ name: string; normalized_name: string; source: string }>;
+
   try {
-    return [...new Set(skillNameArraySchema.parse(parsedResponse))];
+    parsedEntries = skillEntryArraySchema.parse(parsedResponse);
   } catch {
     throw serviceUnavailable('Gemini returned an invalid skill classification response');
   }
+
+  const dedupedEntries = new Map<string, AiSkillEntry>();
+  for (const entry of parsedEntries) {
+    if (!dedupedEntries.has(entry.normalized_name)) {
+      dedupedEntries.set(entry.normalized_name, {
+        name: entry.name.trim(),
+        normalizedName: entry.normalized_name.trim(),
+        source: entry.source.trim(),
+      });
+    }
+  }
+
+  return [...dedupedEntries.values()];
 }
 
 /**
@@ -125,7 +152,7 @@ function parseSkillNames(rawResponse: string | undefined): string[] {
  * skill names to consider during classification.
  * @returns An array of skill names classified as required for the task.
  */
-export async function classifyTaskSkills(taskTitle: string, existingSkillNamesJson: string): Promise<string[]> {
+export async function classifyTaskSkills(taskTitle: string, existingSkillNamesJson: string): Promise<AiSkillEntry[]> {
   const client = await getGeminiClient();
   const userMessage = buildUserMessage(taskTitle, existingSkillNamesJson);
 
@@ -145,11 +172,11 @@ export async function classifyTaskSkills(taskTitle: string, existingSkillNamesJs
       contents: userMessage,
       model: config.gemini.model,
     });
-
     responseText = response.text;
-  } catch {
+  } catch (error) {
+    logger.error(`Failed to classify task skills with Gemini with error: ${(error as Error).message}`);
     throw serviceUnavailable('Failed to generate required skills');
   }
 
-  return parseSkillNames(responseText);
+  return parseSkillEntries(responseText);
 }
