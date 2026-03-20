@@ -5,8 +5,9 @@ import { badRequest, notFound } from '../../shared/errors';
 import { classifyTaskSkills } from '../ai/ai.service';
 import { getSkillNamesForAi } from '../skills/skills.service';
 
-import type { TaskCreateBody, TaskStatusValue, TaskUpdateBody } from './tasks.schemas';
+import type { TaskCreateBody, TaskUpdateBody } from './tasks.schemas';
 import {
+  type SubtaskRecord,
   type TaskReadDto,
   taskReadInclude,
   type TaskRecord,
@@ -29,10 +30,13 @@ const MAX_NESTING_DEPTH = 3;
  * @param skills Task skills with nested skill objects
  * @returns Formatted skills array
  */
-function mapTaskSkills(skills: Array<{ skill: { id: string; name: string } }>): Array<{
+function mapTaskSkills(skills: Array<{ skill: { id: string; name: string } }> | undefined | null): Array<{
   id: string;
   name: string;
 }> {
+  if (!skills) {
+    return [];
+  }
   return skills.map((s) => ({
     id: s.skill.id,
     name: s.skill.name,
@@ -42,12 +46,12 @@ function mapTaskSkills(skills: Array<{ skill: { id: string; name: string } }>): 
 /**
  * Converts a task record to a read DTO.
  *
- * Note: Subtasks are flattened with basic fields only (id, title, status, dates).
- * Nested properties (assignedDeveloper, skills, parentTask, subtasks) are set to null/empty
- * to avoid deep nesting in API responses. Clients can fetch full subtask details separately.
+ * Note: Subtasks are recursively mapped with full fields (including their subtasks).
+ * Nested properties up to MAX_NESTING_DEPTH levels are preserved.
+ * ParentTask is omitted from subtasks to avoid circular references.
  *
  * @param record Task record from database
- * @returns Mapped task DTO with flattened subtasks
+ * @returns Mapped task DTO with full hierarchical subtasks
  */
 function mapTask(record: TaskRecord): TaskReadDto {
   let parentTask = null;
@@ -59,22 +63,9 @@ function mapTask(record: TaskRecord): TaskReadDto {
     };
   }
 
-  // Map subtasks with basic fields only to avoid deep nesting
-  const subtasks: TaskReadDto[] = record.subtasks.map((subtask) => {
-    return {
-      assignedDeveloper: null, // Not included in subtask projection
-      createdAt: subtask.createdAt.toISOString(),
-      description: subtask.description,
-      displayId: subtask.displayId,
-      id: subtask.id,
-      parentTask: null, // Omitted to avoid circular references
-      skills: [], // Not included in subtask projection
-      status: subtask.status,
-      subtasks: [], // Not nested further (single level only)
-      title: subtask.title,
-      updatedAt: subtask.updatedAt.toISOString(),
-    };
-  });
+  // Map subtasks recursively
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const subtasks: TaskReadDto[] = record.subtasks.map((subtask) => mapSubtask(subtask as any));
 
   return {
     assignedDeveloper: record.assignedDeveloper,
@@ -88,6 +79,43 @@ function mapTask(record: TaskRecord): TaskReadDto {
     subtasks,
     title: record.title,
     updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+/**
+ * Maps a subtask record (and its sub-subtasks) recursively.
+ * @param subtask Subtask record from database
+ * @returns Mapped subtask DTO
+ */
+function mapSubtask(subtask: SubtaskRecord): TaskReadDto {
+  let subtaskAssignedDeveloper = null;
+  if (subtask.assignedDeveloper) {
+    subtaskAssignedDeveloper = {
+      id: subtask.assignedDeveloper.id,
+      name: subtask.assignedDeveloper.name,
+    };
+  }
+
+  const subtaskSkills = mapTaskSkills(subtask.skills);
+
+  // Recursively map nested subtasks
+  const nestedSubtasks: TaskReadDto[] = (subtask.subtasks ?? []).map(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (subsubtask: any) => mapSubtask(subsubtask),
+  );
+
+  return {
+    assignedDeveloper: subtaskAssignedDeveloper,
+    createdAt: subtask.createdAt.toISOString(),
+    description: subtask.description,
+    displayId: subtask.displayId,
+    id: subtask.id,
+    parentTask: null, // Omitted to avoid circular references
+    skills: subtaskSkills,
+    status: subtask.status,
+    subtasks: nestedSubtasks,
+    title: subtask.title,
+    updatedAt: subtask.updatedAt.toISOString(),
   };
 }
 
@@ -435,31 +463,14 @@ function resolveSkillIds(
  * @param skillIds Skill IDs to attach
  * @returns Data for creating task
  */
-function buildTaskCreateData(
-  input: TaskCreateBody,
-  skillIds: string[],
-): {
-  assignedDeveloperId?: string | null;
-  description?: string | null;
-  parentTaskId?: string | null;
-  skills?: {
-    create: Array<{ skillId: string }>;
-  };
-  title: string;
-} {
-  const data: {
-    assignedDeveloperId?: string | null;
-    description?: string | null;
-    parentTaskId?: string | null;
-    skills?: {
-      create: Array<{ skillId: string }>;
-    };
-    title: string;
-  } = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildTaskCreateData(input: TaskCreateBody, skillIds: string[]): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any = {
     title: input.title,
   };
 
-  if (input.assignedDeveloperId !== undefined) {
+  if (input.assignedDeveloperId !== undefined && input.assignedDeveloperId !== null) {
     data.assignedDeveloperId = input.assignedDeveloperId;
   }
 
@@ -467,8 +478,12 @@ function buildTaskCreateData(
     data.description = input.description;
   }
 
-  if (input.parentTaskId !== undefined) {
+  if (input.parentTaskId !== undefined && input.parentTaskId !== null) {
     data.parentTaskId = input.parentTaskId;
+  }
+
+  if (input.status !== undefined) {
+    data.status = input.status;
   }
 
   if (skillIds.length > 0) {
@@ -488,27 +503,10 @@ function buildTaskCreateData(
  * @param skillIds Skill IDs to set
  * @returns Data for updating task
  */
-function buildTaskUpdateData(
-  input: TaskUpdateBody,
-  skillIds: string[],
-): {
-  assignedDeveloperId?: string | null;
-  parentTaskId?: string | null;
-  skills?: {
-    deleteMany: {};
-    create: Array<{ skillId: string }>;
-  };
-  status?: TaskStatusValue;
-} {
-  const data: {
-    assignedDeveloperId?: string | null;
-    parentTaskId?: string | null;
-    skills?: {
-      deleteMany: {};
-      create: Array<{ skillId: string }>;
-    };
-    status?: TaskStatusValue;
-  } = {};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildTaskUpdateData(input: TaskUpdateBody, skillIds: string[]): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any = {};
 
   if (input.assignedDeveloperId !== undefined) {
     data.assignedDeveloperId = input.assignedDeveloperId;

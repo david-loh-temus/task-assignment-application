@@ -69,6 +69,110 @@ describe('tasks.service - Subtasks Hierarchy', () => {
       );
     });
 
+    it('creates a sub-task with all fields: status, skills, and assigned developer', async () => {
+      // displayId: 100 (parent), displayId: 101 (subtask)
+      const parentUuid = '11111111-1111-1111-1111-000000000100';
+      const subtaskUuid = '11111111-1111-1111-1111-000000000101';
+      const developerUuid = '22222222-2222-2222-2222-000000000001';
+      const skillUuid = '33333333-3333-3333-3333-000000000001';
+
+      const { createTask, databaseDouble } = await loadTasksService({
+        developerFindUniqueImplementation: async () => ({
+          id: developerUuid,
+          skills: [
+            {
+              skillId: skillUuid,
+            },
+          ],
+        }),
+        skillFindManyImplementation: async () => [
+          {
+            id: skillUuid,
+            name: 'Frontend',
+          },
+        ],
+        taskFindUniqueImplementation: async () => ({
+          id: parentUuid,
+          parentTaskId: null,
+        }),
+        taskCreateImplementation: async () => ({
+          assignedDeveloper: {
+            id: developerUuid,
+            name: 'Alice',
+          },
+          createdAt: new Date('2026-03-20T07:37:54.905Z'),
+          description: null,
+          displayId: 101,
+          id: subtaskUuid,
+          parentTask: {
+            displayId: 1,
+            id: parentUuid,
+            title: 'Parent Task Title',
+          },
+          skills: [
+            {
+              skill: {
+                id: skillUuid,
+                name: 'Frontend',
+              },
+            },
+          ],
+          status: TaskStatus.IN_PROGRESS,
+          subtasks: [],
+          title: 'Add Subtask for #1 V2',
+          updatedAt: new Date('2026-03-20T07:37:54.905Z'),
+        }),
+      });
+
+      await expect(
+        createTask({
+          title: 'Add Subtask for #1 V2',
+          description: null,
+          assignedDeveloperId: developerUuid,
+          skillIds: [skillUuid],
+          status: TaskStatus.IN_PROGRESS,
+          parentTaskId: parentUuid,
+        }),
+      ).resolves.toMatchObject({
+        displayId: 101,
+        id: subtaskUuid,
+        parentTask: {
+          id: parentUuid,
+          title: 'Parent Task Title',
+        },
+        assignedDeveloper: {
+          id: developerUuid,
+          name: 'Alice',
+        },
+        skills: [
+          {
+            id: skillUuid,
+            name: 'Frontend',
+          },
+        ],
+        status: TaskStatus.IN_PROGRESS,
+        title: 'Add Subtask for #1 V2',
+      });
+
+      expect(databaseDouble.task.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            assignedDeveloperId: developerUuid,
+            parentTaskId: parentUuid,
+            status: TaskStatus.IN_PROGRESS,
+            skills: {
+              create: [
+                {
+                  skillId: skillUuid,
+                },
+              ],
+            },
+            title: 'Add Subtask for #1 V2',
+          }),
+        }),
+      );
+    });
+
     it('rejects sub-task creation when parent task does not exist', async () => {
       const { createTask } = await loadTasksService({
         taskFindUniqueImplementation: async () => null,

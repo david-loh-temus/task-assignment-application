@@ -10,6 +10,30 @@ import { TaskStatus } from '@prisma/client';
  * - Skill UUIDs: 33333333-3333-3333-3333-000000000001
  */
 
+// Reusable select/include patterns for Prisma queries
+const developerSelect = {
+  select: {
+    id: true,
+    name: true,
+  },
+};
+
+const skillsInclude = {
+  include: {
+    skill: {
+      select: {
+        id: true,
+        name: true,
+      },
+    },
+  },
+  orderBy: {
+    skill: {
+      name: 'asc',
+    },
+  },
+};
+
 export const sampleDeveloper = {
   id: '22222222-2222-2222-2222-000000000001',
   name: 'Alice',
@@ -86,12 +110,7 @@ export const sampleSubtask = {
 
 export const expectedTaskReadInclude = {
   include: {
-    assignedDeveloper: {
-      select: {
-        id: true,
-        name: true,
-      },
-    },
+    assignedDeveloper: developerSelect,
     parentTask: {
       select: {
         displayId: true,
@@ -99,30 +118,31 @@ export const expectedTaskReadInclude = {
         title: true,
       },
     },
-    skills: {
-      include: {
-        skill: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        skill: {
-          name: 'asc',
-        },
-      },
-    },
+    skills: skillsInclude,
     subtasks: {
       select: {
+        assignedDeveloper: developerSelect,
         createdAt: true,
         description: true,
         displayId: true,
         id: true,
+        skills: skillsInclude,
         status: true,
         title: true,
         updatedAt: true,
+        subtasks: {
+          select: {
+            assignedDeveloper: developerSelect,
+            createdAt: true,
+            description: true,
+            displayId: true,
+            id: true,
+            skills: skillsInclude,
+            status: true,
+            title: true,
+            updatedAt: true,
+          },
+        },
       },
     },
   },

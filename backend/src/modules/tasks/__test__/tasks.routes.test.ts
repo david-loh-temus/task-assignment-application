@@ -534,7 +534,14 @@ describe('tasks.routes', () => {
             displayId: 20,
             id: '20000000-0000-4000-8000-000000000002',
             title: 'Child Task',
-            subtasks: [],
+            subtasks: expect.arrayContaining([
+              expect.objectContaining({
+                displayId: 30,
+                id: '30000000-0000-4000-8000-000000000002',
+                title: 'Grandchild Task',
+                subtasks: [],
+              }),
+            ]),
           }),
         ]),
       });
