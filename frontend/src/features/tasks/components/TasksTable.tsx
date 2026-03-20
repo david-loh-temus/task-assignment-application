@@ -1,5 +1,5 @@
 import { Table, Typography } from 'antd';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { TaskAssigneeSelect } from '@features/tasks/components/TaskAssigneeSelect';
 import { TaskSkillsCell } from '@features/tasks/components/TaskSkillsCell';
@@ -16,11 +16,6 @@ type TasksTableProps = {
   pendingTaskId?: string;
   tasks: Task[];
 };
-
-/**
- * Filters developers who possess ALL skills required by a task.
- * Tasks with no required skills can be assigned to anyone.
- */
 
 /**
  * Filters developers who possess ALL skills required by a task.
@@ -43,6 +38,83 @@ const getCompatibleDevelopers = (task: Task, developers: Developer[]) => {
 
     return [...requiredSkillIds].every((skillId) => developerSkillIds.has(skillId));
   });
+};
+
+type TaskStatusCellProps = {
+  isUpdatingTask: boolean;
+  onStatusChange: (task: Task, status: TaskStatus) => void;
+  pendingTaskId?: string;
+  task: Task;
+};
+
+const TaskStatusCell = ({ isUpdatingTask, onStatusChange, pendingTaskId, task }: TaskStatusCellProps) => {
+  const handleChange = useCallback(
+    (nextStatus: TaskStatus) => {
+      onStatusChange(task, nextStatus);
+    },
+    [onStatusChange, task],
+  );
+
+  return (
+    <TaskStatusSelect
+      disabled={isUpdatingTask && pendingTaskId === task.id}
+      onChange={handleChange}
+      value={task.status}
+    />
+  );
+};
+
+type TaskAssigneeCellProps = {
+  developers: Developer[];
+  isUpdatingTask: boolean;
+  onAssigneeChange: (task: Task, assignedDeveloper: TaskAssignedDeveloper | null) => void;
+  pendingTaskId?: string;
+  task: Task;
+};
+
+const TaskAssigneeCell = ({
+  developers,
+  isUpdatingTask,
+  onAssigneeChange,
+  pendingTaskId,
+  task,
+}: TaskAssigneeCellProps) => {
+  const options = useMemo(() => {
+    const compatibleDevelopers = getCompatibleDevelopers(task, developers);
+    const compatibleDeveloperIds = new Set(compatibleDevelopers.map((developer) => developer.id));
+
+    return developers.map((developer) => ({
+      label: developer.name,
+      value: developer.id,
+      disabled: !compatibleDeveloperIds.has(developer.id),
+    }));
+  }, [developers, task]);
+
+  const handleChange = useCallback(
+    (nextAssigneeId: string | null) => {
+      const nextAssignee = developers.find((developer) => developer.id === nextAssigneeId);
+
+      onAssigneeChange(
+        task,
+        nextAssignee
+          ? {
+              id: nextAssignee.id,
+              name: nextAssignee.name,
+            }
+          : null,
+      );
+    },
+    [developers, onAssigneeChange, task],
+  );
+
+  return (
+    <TaskAssigneeSelect
+      disabled={isUpdatingTask && pendingTaskId === task.id}
+      onChange={handleChange}
+      options={options}
+      value={task.assignedDeveloper?.id ?? null}
+    />
+  );
 };
 
 export const TasksTable = ({
@@ -91,11 +163,12 @@ export const TasksTable = ({
       {
         dataIndex: 'status',
         key: 'status',
-        render: (status: Task['status'], task: Task) => (
-          <TaskStatusSelect
-            disabled={isUpdatingTask && pendingTaskId === task.id}
-            onChange={(nextStatus) => onStatusChange(task, nextStatus)}
-            value={status}
+        render: (_status: Task['status'], task: Task) => (
+          <TaskStatusCell
+            isUpdatingTask={isUpdatingTask}
+            onStatusChange={onStatusChange}
+            pendingTaskId={pendingTaskId}
+            task={task}
           />
         ),
         title: 'Status',
@@ -104,36 +177,15 @@ export const TasksTable = ({
       {
         dataIndex: 'assignedDeveloper',
         key: 'assignedDeveloper',
-        render: (assignedDeveloper: Task['assignedDeveloper'], task: Task) => {
-          const compatibleDevelopers = getCompatibleDevelopers(task, developers);
-          const compatibleDeveloperIds = new Set(compatibleDevelopers.map((d) => d.id));
-          const options = developers.map((developer) => ({
-            label: developer.name,
-            value: developer.id,
-            disabled: !compatibleDeveloperIds.has(developer.id),
-          }));
-
-          return (
-            <TaskAssigneeSelect
-              disabled={isUpdatingTask && pendingTaskId === task.id}
-              onChange={(nextAssigneeId) => {
-                const nextAssignee = developers.find((developer) => developer.id === nextAssigneeId);
-
-                onAssigneeChange(
-                  task,
-                  nextAssignee
-                    ? {
-                        id: nextAssignee.id,
-                        name: nextAssignee.name,
-                      }
-                    : null,
-                );
-              }}
-              options={options}
-              value={assignedDeveloper?.id ?? null}
-            />
-          );
-        },
+        render: (_assignedDeveloper: Task['assignedDeveloper'], task: Task) => (
+          <TaskAssigneeCell
+            developers={developers}
+            isUpdatingTask={isUpdatingTask}
+            onAssigneeChange={onAssigneeChange}
+            pendingTaskId={pendingTaskId}
+            task={task}
+          />
+        ),
         title: 'Assignee',
         width: 200,
       },
@@ -141,5 +193,5 @@ export const TasksTable = ({
     [developers, isUpdatingTask, onAssigneeChange, onStatusChange, pendingTaskId],
   );
 
-  return <Table<Task> columns={columns} dataSource={tasks} pagination={false} rowKey="id" scroll={{ x: 980 }} />;
+  return <Table<Task> columns={columns} dataSource={tasks} pagination={false} rowKey="id" />;
 };
