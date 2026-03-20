@@ -57,9 +57,10 @@ async function loadTasksModule({
           },
           skill: {
             findMany: jest.fn(async () => []),
-            upsert: jest.fn(async (args: { where: { name: string } }) => ({
-              id: `skill-${args.where.name}`,
-              name: args.where.name,
+            upsert: jest.fn(async (args: { where: { name?: string; normalizedName?: string } }) => ({
+              id: `skill-${args.where.normalizedName ?? args.where.name}`,
+              name: args.where.name ?? 'Backend',
+              normalizedName: args.where.normalizedName ?? 'backend',
             })),
           },
           task: {
@@ -85,7 +86,7 @@ async function loadTasksModule({
 
   jest.doMock('../../ai/ai.service', () => ({
     __esModule: true,
-    classifyTaskSkills: jest.fn(async () => ['backend']),
+    classifyTaskSkills: jest.fn(async () => [{ name: 'Backend', normalizedName: 'backend', source: 'existing' }]),
   }));
 
   jest.doMock('../../skills/skills.service', () => {
@@ -96,7 +97,7 @@ async function loadTasksModule({
     return {
       __esModule: true,
       ...actualModule,
-      getSkillNamesForAi: jest.fn(async () => ['backend', 'frontend']),
+      getSkillNamesForAi: jest.fn(async () => ['Backend', 'Frontend']),
     };
   });
 
