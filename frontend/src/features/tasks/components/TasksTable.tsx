@@ -1,4 +1,4 @@
-import { Table, Typography } from 'antd';
+import { Button, Table, Typography } from 'antd';
 import { useCallback, useMemo } from 'react';
 
 import { TaskAssigneeSelect } from '@features/tasks/components/TaskAssigneeSelect';
@@ -11,10 +11,13 @@ import type { TableProps } from 'antd';
 type TasksTableProps = {
   developers: Developer[];
   isUpdatingTask: boolean;
+  onAddSubtask?: (task: Task) => void;
   onAssigneeChange: (task: Task, assignedDeveloper: TaskAssignedDeveloper | null) => void;
   onStatusChange: (task: Task, status: TaskStatus) => void;
   pendingTaskId?: string;
   tasks: Task[];
+  depth?: number;
+  maxDepth?: number;
 };
 
 /**
@@ -117,14 +120,35 @@ const TaskAssigneeCell = ({
   );
 };
 
+type TaskAddSubtaskButtonProps = {
+  onAddSubtask?: (task: Task) => void;
+  task: Task;
+};
+
+const TaskAddSubtaskButton = ({ onAddSubtask, task }: TaskAddSubtaskButtonProps) => {
+  const handleClick = useCallback(() => {
+    onAddSubtask?.(task);
+  }, [onAddSubtask, task]);
+
+  return (
+    <Button size="small" onClick={handleClick}>
+      Add subtask
+    </Button>
+  );
+};
+
 export const TasksTable = ({
   developers,
   isUpdatingTask,
+  onAddSubtask,
   onAssigneeChange,
   onStatusChange,
   pendingTaskId,
   tasks,
+  depth = 1,
+  maxDepth = 3,
 }: TasksTableProps) => {
+  const canAddSubtask = Boolean(onAddSubtask) && depth < maxDepth;
   const columns = useMemo<NonNullable<TableProps<Task>['columns']>>(
     () => [
       {
@@ -185,8 +209,18 @@ export const TasksTable = ({
         title: 'Assignee',
         width: 200,
       },
+      ...(canAddSubtask
+        ? [
+            {
+              key: 'addSubtask',
+              render: (_value: unknown, task: Task) => <TaskAddSubtaskButton onAddSubtask={onAddSubtask} task={task} />,
+              title: 'Actions',
+              width: 140,
+            },
+          ]
+        : []),
     ],
-    [developers, isUpdatingTask, onAssigneeChange, onStatusChange, pendingTaskId],
+    [canAddSubtask, developers, isUpdatingTask, onAddSubtask, onAssigneeChange, onStatusChange, pendingTaskId],
   );
 
   const expandable = useMemo<TableProps<Task>['expandable']>(
@@ -196,15 +230,18 @@ export const TasksTable = ({
           <TasksTable
             developers={developers}
             isUpdatingTask={isUpdatingTask}
+            onAddSubtask={onAddSubtask}
             onAssigneeChange={onAssigneeChange}
             onStatusChange={onStatusChange}
             pendingTaskId={pendingTaskId}
             tasks={task.subtasks}
+            depth={depth + 1}
+            maxDepth={maxDepth}
           />
         ) : null,
       rowExpandable: (task: Task) => (task.subtasks ? task.subtasks.length > 0 : false),
     }),
-    [developers, isUpdatingTask, onAssigneeChange, onStatusChange, pendingTaskId],
+    [depth, developers, isUpdatingTask, maxDepth, onAddSubtask, onAssigneeChange, onStatusChange, pendingTaskId],
   );
 
   return <Table<Task> columns={columns} dataSource={tasks} expandable={expandable} pagination={false} rowKey="id" />;
