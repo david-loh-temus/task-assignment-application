@@ -34,7 +34,7 @@ describe('AppShell', () => {
 
     expect(screen.getByText('Frontend')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Tasks' })).toHaveAttribute('href', '/');
-    expect(screen.getByText('Create Task')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Create Task' })).toHaveAttribute('href', '/create-task');
     expect(screen.getByText('Team')).toBeInTheDocument();
     expect(screen.getAllByText('Task Assignment')).toHaveLength(2);
     expect(screen.getByText('Page content')).toBeInTheDocument();
