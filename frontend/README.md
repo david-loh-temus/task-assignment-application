@@ -10,8 +10,6 @@ This directory contains the frontend web application for the Task Assignment sys
 - TanStack Router
 - TanStack Query
 - Ant Design
-- React Hook Form
-- Zod
 
 ## Directory Structure
 
@@ -50,6 +48,8 @@ Frontend:
 npm install
 ```
 
+Environment: copy `.env.example` to `.env` and set any required variables for API host or feature flags.
+
 ## Local Development
 
 1. Start PostgreSQL from the repository root:
@@ -67,19 +67,19 @@ npm install
 npm run dev
 ```
 
-3. Start the frontend dev server in this directory:
+3. Start the frontend dev server:
 
 ```bash
-cd ../frontend
-npm install
 npm run dev
 ```
 
 Default ports:
 
-- frontend dev server: `127.0.0.1:3000`
+- frontend dev server: `127.0.0.1:3000` (the `dev` script runs `vite dev --port 3000`)
 - backend dev server: `127.0.0.1:4000`
 - PostgreSQL: `127.0.0.1:5432`
+
+Preview: `npm run preview` uses Vite's preview server (default port `5173` unless overridden).
 
 ## Full Containerized Application
 
@@ -90,7 +90,7 @@ cd ..
 docker compose up --build
 ```
 
-The frontend container serves the built application with Nginx.
+The frontend container serves the built application with Nginx (container listens on port `80`; compose maps it to host `8080`).
 
 Default ports:
 
@@ -100,24 +100,23 @@ Default ports:
 
 ## Container
 
-[`Dockerfile`](Dockerfile) builds the production frontend container.
+[`Dockerfile`](Dockerfile) builds the production frontend container (served by Nginx in the container on port `80`).
 
 ## Scripts
 
 The following scripts are available in `frontend/package.json`:
 
-- `npm run dev`: start the Vite development server on port `3000`
-- `npm run build`: build the frontend for production
-- `npm run preview`: preview the production build locally
-- `npm run lint`: run ESLint on frontend source files
-- `npm run lint:fix`: run ESLint and apply fixable changes
-- `npm run lint:css`: run Stylelint on CSS/SCSS files
-- `npm run lint:css:fix`: run Stylelint and apply fixable CSS changes
-- `npm run typecheck`: run TypeScript type-checking without emitting files
-- `npm run format`: write formatting changes with Prettier
-- `npm run format:check`: check formatting with Prettier
-- `npm run test`: run Vitest
-- `npm run test:watch`: run Vitest in watch mode
-- `npm run test:ci`: run Vitest once for CI-style usage
-- `npm run test:coverage`: run Vitest with coverage output
-- `npm run prepare`: install Husky hooks
+- `npm run dev` — start the Vite development server on port `3000` (`vite dev --port 3000`)
+- `npm run build` — build the frontend for production (`vite build`)
+- `npm run preview` — preview the production build locally (`vite preview`, default port `5173`)
+- `npm run test` / `npm run test:watch` / `npm run test:ci` / `npm run test:coverage` — run Vitest tests and coverage
+- `npm run lint` / `npm run lint:fix` — run ESLint / auto-fix
+- `npm run lint:css` / `npm run lint:css:fix` — run Stylelint / auto-fix CSS
+- `npm run typecheck` — run `tsgo -b --pretty --noEmit` (type checking)
+- `npm run format` / `npm run format:check` — Prettier
+- `npm run prepare` — install Husky hooks
+
+Notes:
+
+- The `package.json` is configured with `type: "module"` and an `imports` map (`#/*` -> `./src/*`) to support absolute-ish imports in the codebase.
+- `lint-staged` is configured to run formatting and lint fixes on staged files (see `package.json`).

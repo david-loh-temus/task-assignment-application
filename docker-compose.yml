@@ -28,6 +28,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      backend-migrate:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       PORT: 4000
@@ -40,6 +42,23 @@ services:
       start_period: 10s
     ports:
       - '${BACKEND_PORT:-4000}:4000'
+
+  # One-shot service for running Prisma migrations & seed against the DB.
+  # This service uses the backend build (dev target) so Prisma CLI and devDeps
+  # are available. Run it once before starting the production backend, or use
+  # it from CI to apply migrations.
+  backend-migrate:
+    build:
+      context: ./backend
+      target: dev
+    restart: 'no'
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@db:5432/task_assignment}
+    command: sh -c "npm ci && npm run prisma:generate && npm run prisma:migrate:deploy && npm run prisma:seed || true"
 
   frontend:
     build:

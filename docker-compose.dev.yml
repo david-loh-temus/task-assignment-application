@@ -29,7 +29,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: npm run dev
+    command: sh -c "npm run prisma:generate && npm run dev"
     environment:
       NODE_ENV: development
       PORT: 4000
