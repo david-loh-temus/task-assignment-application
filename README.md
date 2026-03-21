@@ -166,8 +166,6 @@ From the repository root:
 
 ```bash
 cp .env.example .env
-docker compose build backend
-docker compose run --rm backend-migrate
 docker compose up --build
 ```
 
@@ -176,6 +174,8 @@ This starts:
 - Backend API on `127.0.0.1:4000`
 - Frontend on `127.0.0.1:8080`
 
+The `backend-migrate` service automatically runs migrations and seeds the database before the backend starts. No additional setup commands are needed.
+
 Useful endpoints:
 - Frontend: `http://127.0.0.1:8080`
 - Backend health: `http://127.0.0.1:4000/health`
@@ -183,14 +183,15 @@ Useful endpoints:
 
 ## Development Guide
 
-### Host-based development
+### Host-based development (Recommended for active development)
+
 Start the database:
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d db
 ```
 
-Backend:
+Backend setup:
 
 ```bash
 cd backend
@@ -200,7 +201,12 @@ npm run prisma:migrate:dev
 npm run dev
 ```
 
-Frontend:
+When you modify `prisma/schema.prisma`:
+```bash
+npm run prisma:migrate:dev --name your_migration_name
+```
+
+Frontend (in a new terminal):
 
 ```bash
 cd frontend
@@ -208,26 +214,48 @@ npm install
 npm run dev
 ```
 
-### Containerized development
+### Containerized development (Using Docker)
 
 ```bash
 docker compose -f docker-compose.dev.yml up --build
 ```
 
+This starts:
+- PostgreSQL on `127.0.0.1:5432`
+- Backend on `127.0.0.1:4000` (auto-reloads on file changes via volume mount)
+- Frontend is NOT included in dev compose (run separately or use production compose)
+
+The backend container uses the `dev` target and includes Prisma CLI tools, so schema changes automatically trigger regeneration.
+
 ## Build and deployment notes
 
-The production backend image excludes devDependencies, including the Prisma CLI. For that reason, migrations are not automatically applied by the production container itself.
+### Prisma in Production
 
-Canonical production startup flow:
+The production backend image (`production` target) excludes devDependencies, including the Prisma CLI tools. This ensures smaller image sizes and faster deployments.
+
+To handle database migrations in production, a dedicated one-shot service (`backend-migrate`) is included in `docker-compose.yml`:
+- It uses the `dev` build target (which includes devDependencies)
+- It runs before the main backend service
+- It executes `prisma generate` (for TypeScript types) and `prisma migrate deploy` (for database schema)
+- It then seeds the database with `prisma db seed`
+
+### Starting the production stack
 
 ```bash
 cp .env.example .env
-docker compose build backend
-docker compose run --rm backend-migrate
 docker compose up --build
 ```
 
-If a CI/CD pipeline is introduced later, it should run Prisma generate and migration deployment before starting the production backend.
+Docker Compose automatically:
+1. Builds the backend and frontend images
+2. Starts PostgreSQL
+3. Runs the `backend-migrate` service to apply migrations and seed data
+4. Starts the backend and frontend services
+
+If a CI/CD pipeline is introduced, follow this flow:
+1. Build images: `docker compose build`
+2. Push to registry (optional)
+3. Run compose: `docker compose up` (migrations and seeding happen automatically via `backend-migrate`)
 
 ## Testing
 

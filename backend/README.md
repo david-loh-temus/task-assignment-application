@@ -75,6 +75,39 @@ Notes:
 - The service expects `DATABASE_URL` for Prisma; set it in `.env` or your environment.
 - The default port is `4000` (see `src/config/config.ts`).
 
+### Prisma Workflow for Schema Changes
+
+When making schema changes during local development:
+
+1. Edit `prisma/schema.prisma` with your changes
+2. Create and apply the migration:
+   ```bash
+   npm run prisma:migrate:dev --name describe_your_change
+   ```
+   This command:
+   - Formats and validates your schema
+   - Generates SQL migration file
+   - Applies the migration to your local database
+   - Automatically regenerates the Prisma client
+
+3. (Optional) Seed test data:
+   ```bash
+   npm run prisma:seed
+   ```
+
+4. Commit both `prisma/schema.prisma` and any new migration files in `prisma/migrations/` to source control
+
+### Prisma Client Generation
+
+The Prisma client is automatically regenerated when:
+- You run `prisma migrate dev`
+- You run `npm run dev` (to ensure types are up-to-date)
+
+Manual regeneration (if needed):
+```bash
+npm run prisma:generate
+```
+
 ## Backend Container
 
 Start PostgreSQL and the backend container:
@@ -85,6 +118,15 @@ docker compose -f docker-compose.dev.yml up --build
 ```
 
 Default port: `127.0.0.1:4000`
+
+**Note:** When using the containerized dev setup, apply migrations from your host machine:
+
+```bash
+cd backend
+npm run prisma:migrate:dev
+```
+
+The container will automatically regenerate the Prisma client and reload the server.
 
 Run the backend container from the full-stack compose file:
 
