@@ -54,6 +54,8 @@ npm install
 
 Environment: copy `.env.example` to `.env` and set `DATABASE_URL` (Prisma), `GEMINI_API_KEY` and other secrets as needed.
 
+Important: when running the full stack with Docker Compose, ensure `GEMINI_API_KEY` is set in the `.env` file or the compose environment. The backend relies on the Gemini LLM for automatic skill classification and related LLM features — the service will not be fully operational for LLM-dependent endpoints without this key.
+
 ## Local Development
 
 1. Start PostgreSQL from the repository root:

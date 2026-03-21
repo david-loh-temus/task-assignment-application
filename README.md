@@ -157,6 +157,8 @@ Files:
 ### Environment management
 Environment variables are not hardcoded in Docker images. Runtime configuration is supplied through `.env`.
 
+- **GEMINI_API_KEY**: The backend uses Google's Gemini LLM (via `@google/genai`) for automatic skill classification and other AI features. When running locally or with Docker Compose, ensure `GEMINI_API_KEY` is provided (for example, add it to `backend/.env` or to the environment used by `docker compose`). Without this key the LLM features will be disabled and some endpoints may not function as expected.
+
 ### Prisma initialization
 Prisma client generation must happen before migrations and seed execution. Because the production backend image excludes devDependencies, migrations are run through a dedicated one-shot Docker service before the full stack is started.
 
